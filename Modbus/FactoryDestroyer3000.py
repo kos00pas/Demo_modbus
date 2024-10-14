@@ -6,7 +6,7 @@ import time
 
 # Get IP Address
 hostname = socket.gethostname()
-IPAddr = "172.20.246.249" #socket.gethostbyname(hostname)
+IPAddr = "192.168.0.8" #socket.gethostbyname(hostname)
 
 
 # Connect with OpenPLC runtime
