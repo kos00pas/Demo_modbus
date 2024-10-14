@@ -29,6 +29,7 @@ class The_Console_Window(tk.Frame):
         self.after(200, lambda: self.print_to_terminal("Running command 1..."))
         self.after(300, lambda: self.print_to_terminal("Command 1 complete"))
         self.after(400, lambda: self.print_to_terminal("Running command 2..."))
+
     def print_to_terminal(self, text):
         # Function to insert text into the terminal and scroll down
         self.terminal.config(state=tk.NORMAL)
