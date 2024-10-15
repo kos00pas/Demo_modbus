@@ -8,21 +8,31 @@ class Connection_page(tk.Frame):
     def __init__(self, parent, database):
         super().__init__(parent)
 
-        label = tk.Label(self, text="This is Page 1")
-        label.pack()
         self.configure(bg="gray")
         self.DATA = database
-        self.DATA.connection_ip = tk.Entry(self, width=20)
-        self.DATA.connection_ip.pack(pady=10)
 
-        button = tk.Button(self, text="Get Input", command=self.get_ip_and_connect)
-        button.pack(pady=5)
+        # Frame to hold connection_ip and buttons side by side
+        top_frame = tk.Frame(self, bg="gray")
+        top_frame.pack(pady=10)
 
+        label_ip = tk.Label(top_frame, text="Add IP:")
+        label_ip.pack(side="left", padx=5)
+
+        self.DATA.connection_ip = tk.Entry(top_frame, width=20)
+        self.DATA.connection_ip.pack(side="left", padx=10)
+
+        button_get = tk.Button(top_frame, text="Get Input", command=self.get_ip_and_connect)
+        button_get.pack(side="left", padx=10)
+
+        self.button_refresh = tk.Button(top_frame, text="Refresh Values", command=self.refresh,state=tk.DISABLED)
+        self.button_refresh.pack(side="left", padx=10)
+
+        # Label for connection result
         self.result__connection_label = tk.Label(self, text="")
         self.result__connection_label.pack(pady=(10, 5))  # Add vertical padding: 10 pixels above, 5 below
 
         # Text widget for found devices
-        self.result_found_dec_text = tk.Text(self, bg="black",wrap="word", height=35, width=50)
+        self.result_found_dec_text = tk.Text(self, bg="black", wrap="word", height=35, width=50)
         self.result_found_dec_text.pack(pady=(5, 10))
 
         # Tag configuration for blue-colored categories
@@ -47,36 +57,46 @@ class Connection_page(tk.Frame):
                 self.result__connection_label.config(text=f"Connected to {target_ip}:{port}", fg="green")
                 print(f"Modbus communication established with {target_ip}:{port}")
                 # Call the function for post-connection actions
-                self.post_connect_action(self.DATA.client)
+                self.post_connect_action()
                 return self.DATA.client
             else:
                 self.result__connection_label.config(text=f"Connection failed to {target_ip}:{port}", fg="red")
+                self.result_found_dec_text.delete("1.0", tk.END)  # Clear previous content
+                self.button_refresh.config(state=tk.DISABLED)
                 print(f"No Modbus communication with {target_ip}:{port}")
                 self.DATA.client.close()
         except Exception as e:
             self.result__connection_label.config(text=f"Error: {e}", fg="red")
+            self.result_found_dec_text.delete("1.0", tk.END)  # Clear previous content
+
             print(f"Error connecting to {target_ip}:{port}: {e}")
             self.DATA.client.close()
+            self.button_refresh.config(state=tk.DISABLED)
 
         return None
+    def refresh(self):
+        self.post_connect_action()
 
     def is_valid_ip(self, ip):
         try:
             ipaddress.ip_address(ip)
             return True
         except ValueError:
+            self.button_refresh.config(state=tk.DISABLED)
             return False
 
 
     # Function to read and print the desired coil states, discrete inputs, and weight register
-    def post_connect_action(self, client):
+    def post_connect_action(self):
         print("Running post-connection actions...")
         slave_id = 1  # Specify the slave ID
         found_devices = {}
-
+        client=self.DATA.client
         if client.connect():
             try:
+                self.button_refresh.config(state=tk.NORMAL)
                 # Read coils (total of highest index + 1)
+
                 response = client.read_coils(0, max(self.DATA.coil_addresses.values()) + 1, slave=slave_id)
                 if response.isError():
                     print("Error reading coils")
@@ -102,6 +122,7 @@ class Connection_page(tk.Frame):
                         print(f"{name} (Discrete %IX{100 + address // 8}.{address % 8}): {'ON' if state else 'OFF'}")
 
                 # Read input register at %IW100
+
                 response = client.read_input_registers(0, 1, slave=slave_id)
                 if response.isError():
                     print("Error reading input register")
@@ -134,4 +155,6 @@ class Connection_page(tk.Frame):
                 client.close()
         else:
             print("Unable to connect to the client")
+            self.button_refresh.config(state=tk.DISABLED)
+
 
