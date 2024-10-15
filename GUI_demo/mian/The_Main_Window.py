@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 from The_Terminal_Window import The_Terminal_Window  # Import the console frame
 from Connection_page import Connection_page
-from Coils_n_Sensors import Coils_n_Sensors
+from Manipulation import Manipulation
 
 
 class Main_Window(tk.Tk):
@@ -22,42 +22,42 @@ class Main_Window(tk.Tk):
 
     def navigator_control_frame(self):
         # Create the navigation frame inside main_window_frame
-        self.navigation_frame = tk.Frame(self.main_window_frame, bg="gray")
+        self.navigation_frame = tk.Frame(self.main_window_frame, bg="black")
         self.navigation_frame.pack(side="top", fill="x")
 
         # Page selection buttons
         button1 = tk.Button(self.navigation_frame, text="Connection Page", command=self.show_connection_window)
-        button2 = tk.Button(self.navigation_frame, text="Page 2", command=self.show_page2)
+        button2 = tk.Button(self.navigation_frame, text="Manipulation", command=self.show_manipulation_window)
         button1.pack(side="left")
         button2.pack(side="left")
 
         # Frame for pages (inside main_window_frame)
         self.DATA.connection_window = Connection_page(self.main_window_frame,self.DATA)
-        self.coils_n_sensors_window = Coils_n_Sensors(self.main_window_frame,self.DATA)
+        self.manipulation_window = Manipulation(self.main_window_frame, self.DATA)
 
         # Pack pages to fill main_window_frame, but hide them initially
         self.DATA.connection_window.pack(fill="both", expand=True)
-        self.coils_n_sensors_window.pack(fill="both", expand=True)
+        self.manipulation_window.pack(fill="both", expand=True)
 
         # Show only the first page by default
         self.show_connection_window()
 
     def show_connection_window(self):
-        self.coils_n_sensors_window.pack_forget()
+        self.manipulation_window.pack_forget()
         self.DATA.connection_window.pack(fill="both", expand=True)
         self.DATA.connection_window.tkraise()
 
-    def show_page2(self):
+    def show_manipulation_window(self):
         self.DATA.connection_window.pack_forget()
-        self.coils_n_sensors_window.pack(fill="both", expand=True)
-        self.coils_n_sensors_window.tkraise()
+        self.manipulation_window.pack(fill="both", expand=True)
+        self.manipulation_window.tkraise()
 
     def setup_main_and_console_layout(self):
         paned_window = tk.PanedWindow(self, orient="horizontal")
         paned_window.pack(fill="both", expand=True)
 
         # Define frames for main content and console
-        self.terminal_window_frame = tk.Frame(paned_window, bg="black")
+        self.terminal_window_frame = tk.Frame(paned_window, bg="gray")
         self.main_window_frame = tk.Frame(paned_window, bg="dark blue")
 
         # Add frames to paned window
