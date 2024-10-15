@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 from The_Terminal_Window import The_Terminal_Window  # Import the console frame
 from Connection_page import Connection_page
-from Page2 import Page2
+from Coils_n_Sensors import Coils_n_Sensors
 
 
 class Main_Window(tk.Tk):
@@ -33,24 +33,24 @@ class Main_Window(tk.Tk):
 
         # Frame for pages (inside main_window_frame)
         self.DATA.connection_window = Connection_page(self.main_window_frame,self.DATA)
-        self.page2 = Page2(self.main_window_frame)
+        self.coils_n_sensors_window = Coils_n_Sensors(self.main_window_frame,self.DATA)
 
         # Pack pages to fill main_window_frame, but hide them initially
         self.DATA.connection_window.pack(fill="both", expand=True)
-        self.page2.pack(fill="both", expand=True)
+        self.coils_n_sensors_window.pack(fill="both", expand=True)
 
         # Show only the first page by default
         self.show_connection_window()
 
     def show_connection_window(self):
-        self.page2.pack_forget()
+        self.coils_n_sensors_window.pack_forget()
         self.DATA.connection_window.pack(fill="both", expand=True)
         self.DATA.connection_window.tkraise()
 
     def show_page2(self):
         self.DATA.connection_window.pack_forget()
-        self.page2.pack(fill="both", expand=True)
-        self.page2.tkraise()
+        self.coils_n_sensors_window.pack(fill="both", expand=True)
+        self.coils_n_sensors_window.tkraise()
 
     def setup_main_and_console_layout(self):
         paned_window = tk.PanedWindow(self, orient="horizontal")
@@ -58,7 +58,7 @@ class Main_Window(tk.Tk):
 
         # Define frames for main content and console
         self.terminal_window_frame = tk.Frame(paned_window, bg="black")
-        self.main_window_frame = tk.Frame(paned_window, bg="black")
+        self.main_window_frame = tk.Frame(paned_window, bg="dark blue")
 
         # Add frames to paned window
         paned_window.add(self.main_window_frame, minsize=100)

@@ -3,7 +3,7 @@ import tkinter as tk
 class The_Terminal_Window(tk.Frame):
     def __init__(self, parent, on_close_callback):
         super().__init__(parent)
-        self.configure(bg="gray")  # Optional: set a background color for the console
+        self.configure(bg="dark blue")  # Optional: set a background color for the console
 
         # Add a label for the terminal title
         label = tk.Label(self, text="Terminal", font=("Arial", 16), bg="white")
