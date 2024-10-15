@@ -11,29 +11,31 @@ class Coils_n_Sensors(tk.Frame):
         self.for_coil_frame()
         self.for_disc_inp_frame()
         self.for_anlg_inp_frame()
+        self.configure(bg="dark blue")
 
     def create_subframes(self):
         # Coil Frame
-        coil_frame = tk.Frame(self, borderwidth=2, relief="groove", padx=10, pady=10)
-        coil_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        coil_frame = tk.Frame(self, bg="gray", borderwidth=2, relief="groove", padx=10, pady=10)
+        coil_frame.grid(row=0, column=0,rowspan=2, sticky="nsew", padx=10, pady=10)
         coil_label = tk.Label(coil_frame, text="Coil Frame")
         coil_label.pack()
 
         # Discrete Input Frame
-        dsc_inp_frame = tk.Frame(self, borderwidth=2, relief="groove", padx=10, pady=10)
-        dsc_inp_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+        dsc_inp_frame = tk.Frame(self, bg="gray", borderwidth=2, relief="groove", padx=10, pady=10)
+        dsc_inp_frame.grid(row=0, column=2, sticky="nsew", padx=10, pady=10)
         dsc_inp_label = tk.Label(dsc_inp_frame, text="Discrete Input Frame")
         dsc_inp_label.pack()
 
         # Analog Input Frame
-        analog_inp_frame = tk.Frame(self, borderwidth=2, relief="groove", padx=10, pady=10)
-        analog_inp_frame.grid(row=1, column=1, sticky="nsew", padx=10, pady=10)
+        analog_inp_frame = tk.Frame(self, bg="gray", borderwidth=2, relief="groove", padx=10, pady=10)
+        analog_inp_frame.grid(row=1, column=2, sticky="nsew", padx=10, pady=10)
         analog_inp_label = tk.Label(analog_inp_frame, text="Analog Input Frame")
         analog_inp_label.pack()
 
         # Configure the layout to ensure frames are resizable
-        self.grid_columnconfigure((0, 1, 2), weight=1)
-        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure((0, 2), weight=1)
+        self.grid_rowconfigure(0, weight=5)  # Discrete Input Frame row
+        self.grid_rowconfigure(1, weight=1)  # Analog Input Frame row
 
     def for_coil_frame(self,):
         pass
