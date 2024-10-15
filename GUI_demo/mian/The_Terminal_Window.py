@@ -1,6 +1,6 @@
 import tkinter as tk
 
-class The_Console_Window(tk.Frame):
+class The_Terminal_Window(tk.Frame):
     def __init__(self, parent, on_close_callback):
         super().__init__(parent)
         self.configure(bg="gray")  # Optional: set a background color for the console

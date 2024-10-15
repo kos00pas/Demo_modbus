@@ -2,7 +2,7 @@ from pymodbus.client import ModbusTcpClient
 import time
 
 # Define the IP Address for the Modbus server
-IPAddr = "192.168.0.8"
+IPAddr = "172.20.235.59"
 slave_id = 1  # Specify the slave ID
 
 # Connect with OpenPLC runtime

@@ -1,8 +1,8 @@
 import tkinter as tk
 import matplotlib.pyplot as plt
 import sys
-from The_Console_Window import The_Console_Window  # Import the console frame
-from Page1 import Page1
+from The_Terminal_Window import The_Terminal_Window  # Import the console frame
+from Connection_page import Connection_page
 from Page2 import Page2
 
 
@@ -26,31 +26,29 @@ class Main_Window(tk.Tk):
         self.navigation_frame.pack(side="top", fill="x")
 
         # Page selection buttons
-        button1 = tk.Button(self.navigation_frame, text="Page 1", command=self.show_page1)
+        button1 = tk.Button(self.navigation_frame, text="Connection Page", command=self.show_connection_window)
         button2 = tk.Button(self.navigation_frame, text="Page 2", command=self.show_page2)
         button1.pack(side="left")
         button2.pack(side="left")
 
         # Frame for pages (inside main_window_frame)
-        self.page1 = Page1(self.main_window_frame)
+        self.DATA.connection_window = Connection_page(self.main_window_frame,self.DATA)
         self.page2 = Page2(self.main_window_frame)
 
         # Pack pages to fill main_window_frame, but hide them initially
-        self.page1.pack(fill="both", expand=True)
+        self.DATA.connection_window.pack(fill="both", expand=True)
         self.page2.pack(fill="both", expand=True)
 
         # Show only the first page by default
-        self.show_page1()
+        self.show_connection_window()
 
-    def show_page1(self):
-        # Show Page1 and hide Page2
+    def show_connection_window(self):
         self.page2.pack_forget()
-        self.page1.pack(fill="both", expand=True)
-        self.page1.tkraise()
+        self.DATA.connection_window.pack(fill="both", expand=True)
+        self.DATA.connection_window.tkraise()
 
     def show_page2(self):
-        # Show Page2 and hide Page1
-        self.page1.pack_forget()
+        self.DATA.connection_window.pack_forget()
         self.page2.pack(fill="both", expand=True)
         self.page2.tkraise()
 
@@ -59,12 +57,12 @@ class Main_Window(tk.Tk):
         paned_window.pack(fill="both", expand=True)
 
         # Define frames for main content and console
-        self.console_window_frame = tk.Frame(paned_window, bg="black")
+        self.terminal_window_frame = tk.Frame(paned_window, bg="black")
         self.main_window_frame = tk.Frame(paned_window, bg="black")
 
         # Add frames to paned window
         paned_window.add(self.main_window_frame, minsize=100)
-        paned_window.add(self.console_window_frame, minsize=100)
+        paned_window.add(self.terminal_window_frame, minsize=100)
 
         self.update()
 
@@ -86,8 +84,8 @@ class Main_Window(tk.Tk):
 
     def open_console_window(self):
         if not hasattr(self, 'console_window') or not self.console_window.winfo_exists():
-            self.console_window = The_Console_Window(self.console_window_frame, self.console_closed)
-            self.console_window.pack(fill="both", expand=True)
+            self.DATA.terminal_window = The_Terminal_Window(self.terminal_window_frame, self.console_closed)
+            self.DATA.terminal_window.pack(fill="both", expand=True)
             self.open_console_button.pack_forget()  # Hide button while console is open
 
     def console_closed(self):

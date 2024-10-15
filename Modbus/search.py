@@ -1,7 +1,7 @@
 from pymodbus.client import ModbusTcpClient
 
 # Set the target IP for the PLC
-target_ip = "192.168.0.8"  # OpenPLC Runtime
+target_ip = "172.20.235.59"  # OpenPLC Runtime
 port = 502  # Modbus TCP default port
 
 
