@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 from The_Terminal_Window import The_Terminal_Window  # Import the console frame
 from Connection_page import Connection_page
-from Manipulation import Manipulation
+from The_Manipulation_Window import Manipulation
 
 
 class Main_Window(tk.Tk):

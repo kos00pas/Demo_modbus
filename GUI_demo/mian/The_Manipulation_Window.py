@@ -10,37 +10,93 @@ class Manipulation(tk.Frame):
         # Create the subframes (but don’t populate buttons yet)
         self.create_subframes()
 
-        # Attempt connection and create buttons if successful
 
     def create_buttons(self):
             self.for_coil_frame()
             self.for_disc_inp_frame()
             self.for_analog_inp_frame()
+            self.for_persistent_manipulation_frame()
+
+    def for_persistent_manipulation_frame(self):
+        self.persistent_manipulation_buttons = {}  # Dictionary to store buttons by name
+        left_row = 1
+        center_row = 1
+        right_row = 1
+        both_row = 1
+
+        for name, _ in self.DATA.coil_addresses.items():
+            if name.lower().count("left") > 1 or name.lower().count("right") > 1 or (
+                    "left" in name.lower() and "right" in name.lower()):
+                column = 3
+                row = both_row
+                both_row += 1
+            elif "left" in name.lower():
+                column = 0
+                row = left_row
+                left_row += 1
+            elif "right" in name.lower():
+                column = 2
+                row = right_row
+                right_row += 1
+            else:
+                column = 1
+                row = center_row
+                center_row += 1
+
+            # Create a button with an initial white background and color-changing command
+            button = tk.Button(
+                self.persistent_manipulation_frame,
+                text=name,
+                bg="white",
+                command=lambda name=name: self.toggle_persistent_manipulation_state(name)
+            )
+            button.grid(row=row, column=column, padx=5, pady=5, sticky="ew")
+            self.persistent_manipulation_buttons[name] = button
+
+    def toggle_persistent_manipulation_state(self, name):
+        # Get the current button and its color
+        button = self.persistent_manipulation_buttons[name]
+        current_color = button.cget("bg")
+
+        # Cycle through the colors: white ->  light green-> thistle -> white
+        if current_color == "white":
+            new_color = "light green"
+        elif current_color == "light green":
+            new_color = "thistle"
+        else:
+            new_color = "white"
+
+        # Update the button color
+        button.config(bg=new_color)
+        print(f"Button '{name}' color changed to {new_color}")
+
+    def deactivate_button(self, name):
+        # Reset button color to white
+        if name in self.persistent_manipulation_buttons:
+            self.persistent_manipulation_buttons[name].config(bg="white")
+
     def create_subframes(self):
         # Coil Frame
         self.coil_frame = tk.Frame(self, bg="gray", borderwidth=2, relief="groove", padx=10, pady=10)
         self.coil_frame.grid(row=0, column=0, rowspan=2, sticky="nsew", padx=10, pady=10)
-        coil_label = tk.Label(self.coil_frame, text="Coil Frame")
+        coil_label = tk.Label(self.coil_frame, text="Coil Monitoring")
         coil_label.grid(row=0, column=0, columnspan=4, pady=(0, 10))  # Adjusted for column span
 
-        # Add an Update button in the Coil Frame
-        update_button = tk.Button(
-            self.coil_frame,
-            text="Update States",
-            command=self.DATA.connection_window.refresh_values
-        )
-        update_button.grid(row=0, column=3, padx=5, pady=5, sticky="e")
+        self.persistent_manipulation_frame = tk.Frame(self, bg="light gray", borderwidth=2, relief="groove", padx=10, pady=10)
+        self.persistent_manipulation_frame.grid(row=2, column=0, rowspan=1, sticky="nsew", padx=10, pady=10)
+        persistent_manipulation_label = tk.Label(self.persistent_manipulation_frame, text="Persistent Manipulation ")
+        persistent_manipulation_label.grid(row=0, column=0, columnspan=4, pady=(0, 10))
 
         # Discrete Input Frame
         self.dsc_inp_frame = tk.Frame(self, bg="gray", borderwidth=2, relief="groove", padx=10, pady=10)
         self.dsc_inp_frame.grid(row=0, column=2, sticky="nsew", padx=10, pady=10)
-        dsc_inp_label = tk.Label(self.dsc_inp_frame, text="Discrete Input Frame")
+        dsc_inp_label = tk.Label(self.dsc_inp_frame, text="Discrete Input Monitoring")
         dsc_inp_label.pack()
 
         # Analog Input Frame (Future Frame)
         self.analog_inp_frame = tk.Frame(self, bg="gray", borderwidth=2, relief="groove", padx=10, pady=10)
         self.analog_inp_frame.grid(row=1, column=2, sticky="nsew", padx=10, pady=10)
-        analog_inp_label = tk.Label(self.analog_inp_frame, text="Analog Input Frame")
+        analog_inp_label = tk.Label(self.analog_inp_frame, text="Analog Input Monitoring")
         analog_inp_label.pack()
 
         # Flags for checking if buttons are created in each frame
@@ -169,13 +225,14 @@ class Manipulation(tk.Frame):
             self.DATA.client.write_coil(address, new_state)
             print(f"Coil {name} at address {address} set to {'ON' if new_state else 'OFF'}")
 
-            # Update button appearance
+            # Update button appearance in coil_frame
             for widget in self.coil_frame.winfo_children():
                 if isinstance(widget, tk.Button) and widget.cget("text").startswith(name):
                     widget.config(
                         text=f"{name}: {'ON' if new_state else 'OFF'}",
                         bg="green" if new_state else "red"
                     )
+
         except Exception as e:
             print(f"Failed to write to coil {name} at address {address}: {e}")
 
