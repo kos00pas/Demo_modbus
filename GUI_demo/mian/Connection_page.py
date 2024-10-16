@@ -93,7 +93,6 @@ class Connection_page(tk.Frame):
         except ValueError:
             return False
 
-
     def refresh_values(self):
         print("Running post-connection actions...")
         slave_id = 1  # Specify the slave ID
@@ -112,39 +111,36 @@ class Connection_page(tk.Frame):
                 if response.isError():
                     print("Error reading coils")
                 else:
-                    print("Coil states:")
+                    # print("Coil states:")
                     found_devices['Coils'] = {}
                     for name, (address, _) in self.DATA.coil_addresses.items():
                         state = response.bits[address]
                         self.DATA.coil_addresses[name][1] = state  # Update the boolean value in the array
                         found_devices['Coils'][name] = 'ON' if state else 'OFF'
-                        # print(f"{name} (Coil %QX{100 + address // 8}.{address % 8}): {'ON' if state else 'OFF'}")
 
                 # Read discrete inputs
                 response = client.read_discrete_inputs(0, max(discrete_input_addresses_only) + 1, slave=slave_id)
                 if response.isError():
                     print("Error reading discrete inputs")
                 else:
-                    print("Discrete Input states:")
+                    # print("Discrete Input states:")
                     found_devices['Discrete Inputs'] = {}
                     for name, (address, _) in self.DATA.discrete_input_addresses.items():
                         state = response.bits[address]
                         self.DATA.discrete_input_addresses[name][1] = state  # Update the boolean value in the array
                         found_devices['Discrete Inputs'][name] = 'ON' if state else 'OFF'
-                        # print(f"{name} (Discrete %IX{100 + address // 8}.{address % 8}): {'ON' if state else 'OFF'}")
 
                 # Read input registers for analog inputs
                 response = client.read_input_registers(0, max(analog_input_addresses_only) + 1, slave=slave_id)
                 if response.isError():
                     print("Error reading input registers")
                 else:
-                    print("Analog Input states:")
+                    # print("Analog Input states:")
                     found_devices['Analog Inputs'] = {}
                     for name, (address, _) in self.DATA.analog_input_addresses.items():
                         value = response.registers[address]
                         self.DATA.analog_input_addresses[name] = (address, value)  # Update with new value
                         found_devices['Analog Inputs'][name] = value
-                        # print(f"{name} (Input Register %IW{100 + address}): {value}")
 
                 # Update the text widget
                 self.result_found_dec_text.config(state=tk.NORMAL)
@@ -157,14 +153,13 @@ class Connection_page(tk.Frame):
                         for name, state in devices.items():
                             # Insert each device name and state with the 'devices' tag for green color
                             self.result_found_dec_text.insert(tk.END, f"  - {name}: {state}\n", "devices")
-                    else:
-                        # Insert other entries with the 'devices' tag as well
-                        self.result_found_dec_text.insert(tk.END, f"  - {devices}\n", "devices")
 
                 # Call to update button states
                 self.DATA.manipulation_window.update_button_states()
                 text_content = self.result_found_dec_text.get("1.0", tk.END).strip()
-                self.DATA.terminal_window.add_message(text_content)                # Make the text widget read-only
+                # self.DATA.terminal_window.add_message(text_content)
+
+                # Make the text widget read-only
                 self.result_found_dec_text.config(state=tk.DISABLED)
 
             except Exception as e:
@@ -173,6 +168,10 @@ class Connection_page(tk.Frame):
                 client.close()
         else:
             print("Unable to connect to the client")
+
+        # Schedule the next call to refresh_values
+        self.after(500, self.refresh_values)
+
 
 
 
