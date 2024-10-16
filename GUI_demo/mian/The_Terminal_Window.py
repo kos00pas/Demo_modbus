@@ -1,43 +1,137 @@
 import tkinter as tk
+import sys
+import glob
+from collections import deque
+import random
 
 class The_Terminal_Window(tk.Frame):
     def __init__(self, parent, on_close_callback):
         super().__init__(parent)
-        self.configure(bg="dark blue")  # Optional: set a background color for the console
+        self.configure(bg="dark blue")
 
-        # Add a label for the terminal title
+        # Label for the terminal title
         label = tk.Label(self, text="Terminal", font=("Arial", 16), bg="white")
         label.pack(pady=10, padx=10)
 
-        # Create the terminal output Text widget
+        # Text widget for terminal output
         self.terminal = tk.Text(self, bg="black", fg="green", insertbackground="green", wrap="word")
         self.terminal.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        self.terminal.config(state=tk.DISABLED)  # Disable typing in the terminal
+        self.terminal.config(state=tk.DISABLED)
+
+        # Start/Stop button
+        self.start_stop_button = tk.Button(self, text="Stop", command=self.toggle_output)
+        self.start_stop_button.pack(pady=10)
 
         # Store the callback function for when the console closes
         self.on_close_callback = on_close_callback
-        # Optional close button, uncomment if needed
-        """close_button = tk.Button(self, text="Close", command=self.close_console)
-        close_button.pack(pady=10, padx=10)"""
 
-        self.simulate_terminal_output()
+        # Redirect sys.stdout to the terminal window
+        self.original_stdout = sys.stdout
+        sys.stdout = self  # Redirect standard output to this instance
 
+        # Message queue, buffer, and scheduling of the output
+        self.message_queue = deque()
+        self.buffer = ""  # Buffer to hold characters to process in chunks
+        self.file_buffer = ""  # Buffer for file content
+        self.active_output = False  # Track if new print output is active
+        self.output_paused = False  # Track if output is manually paused
+        self.update_terminal()  # Schedule regular updates
 
-    def simulate_terminal_output(self):
-        # Example of using after within the class to simulate output
-        self.after(100, lambda: self.print_to_terminal("Starting simulated terminal..."))
-        self.after(200, lambda: self.print_to_terminal("Running command 1..."))
-        self.after(300, lambda: self.print_to_terminal("Command 1 complete"))
-        self.after(400, lambda: self.print_to_terminal("Running command 2..."))
+    def write(self, message):
+        # Add message to the queue and set active output flag
+        self.message_queue.append(message)
+        self.active_output = True
 
-    def print_to_terminal(self, text):
-        # Function to insert text into the terminal and scroll down
-        self.terminal.config(state=tk.NORMAL)
-        self.terminal.insert(tk.END, text + "\n")
-        self.terminal.see(tk.END)
-        self.terminal.config(state=tk.DISABLED)
+    def load_files_into_buffer(self):
+        # Read all .py files in the directory and add their content to file_buffer
+        files = glob.glob("*.py")  # Adjust the path as needed
+        self.file_buffer = ""
+        for file_path in files:
+            with open(file_path, 'r') as file:
+                self.file_buffer += file.read() + "\n"  # Separate each file content
+
+    def update_terminal(self):
+        # Check if output is paused
+        if self.output_paused:
+            self.after(100, self.update_terminal)
+            return
+
+        # Enable the Text widget, insert a chunk from the buffer, then disable it
+        if self.buffer or self.message_queue:
+            self.terminal.config(state=tk.NORMAL)
+
+            # Add new messages from the queue to the buffer
+            while self.message_queue:
+                self.buffer += self.message_queue.popleft()
+
+            # Display up to 100 characters from the buffer
+            chunk = self.buffer[:100]
+
+            # Split chunk into words and determine red words
+            words = chunk.split()
+            num_red_words = max(1, len(words) // 10)  # Ensure at least one word is red if possible
+            red_indices = set(random.sample(range(len(words)), num_red_words))
+
+            # Insert each word, coloring 10% of them red
+            for i, word in enumerate(words):
+                if i in red_indices:
+                    self.terminal.insert(tk.END, word + " ", ("red",))
+                else:
+                    self.terminal.insert(tk.END, word + " ", ("green",))
+
+            # Configure tags for color
+            self.terminal.tag_config("green", foreground="green")
+            self.terminal.tag_config("red", foreground="red")
+
+            # Update the widget
+            self.terminal.config(state=tk.DISABLED)
+            self.terminal.see(tk.END)  # Auto-scroll to the end
+
+            # Remove the displayed chunk from the buffer
+            self.buffer = self.buffer[100:]
+
+            # Reset the active output flag if no new output was generated
+            self.active_output = bool(self.message_queue)
+
+        elif self.file_buffer:
+            # Print from file content buffer if there is no new output
+            self.terminal.config(state=tk.NORMAL)
+            chunk = self.file_buffer[:100]
+
+            # Split chunk into words and determine red words
+            words = chunk.split()
+            num_red_words = max(1, len(words) // 10)
+            red_indices = set(random.sample(range(len(words)), num_red_words))
+
+            # Insert each word, coloring 10% of them red
+            for i, word in enumerate(words):
+                if i in red_indices:
+                    self.terminal.insert(tk.END, word + " ", ("red",))
+                else:
+                    self.terminal.insert(tk.END, word + " ", ("green",))
+
+            # Update the widget
+            self.terminal.config(state=tk.DISABLED)
+            self.terminal.see(tk.END)
+            self.file_buffer = self.file_buffer[100:]
+
+        elif not self.file_buffer and not self.active_output:
+            # Reload files if buffer is empty and no new output is active
+            self.load_files_into_buffer()
+
+        # Schedule the next update
+        self.after(100, self.update_terminal)
+
+    def toggle_output(self):
+        # Toggle the output paused state and button text
+        self.output_paused = not self.output_paused
+        self.start_stop_button.config(text="Start" if self.output_paused else "Stop")
+
+    def flush(self):
+        # Required for compatibility with sys.stdout
+        pass
 
     def close_console(self):
-        # Notify the main window that the console has been closed
+        # Restore the original stdout
+        sys.stdout = self.original_stdout
         self.on_close_callback()
-        self.destroy()
