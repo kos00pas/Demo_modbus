@@ -48,7 +48,7 @@ class Data_Class:
             "Right_Stick_Sensor": [2, False]
         }
         self.analog_input_addresses= {
-            "Weight"  : [0,0],
+            "Weight"  : [0,0]
         }
 
     def close(self):

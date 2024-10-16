@@ -146,7 +146,7 @@ class Connection_page(tk.Frame):
                         found_devices['Analog Inputs'][name] = value
                         print(f"{name} (Input Register %IW{100 + address}): {value}")
 
-                # Update the result_found_dec_text widget with the results
+                # Update the text widget
                 self.result_found_dec_text.config(state=tk.NORMAL)
                 self.result_found_dec_text.delete(1.0, tk.END)
 
@@ -155,12 +155,13 @@ class Connection_page(tk.Frame):
                     self.result_found_dec_text.insert(tk.END, f"\n{category}:\n", "category")
                     if isinstance(devices, dict):
                         for name, state in devices.items():
-                            # Insert each device name and state/value with the 'devices' tag for green color
+                            # Insert each device name and state with the 'devices' tag for green color
                             self.result_found_dec_text.insert(tk.END, f"  - {name}: {state}\n", "devices")
                     else:
                         # Insert other entries with the 'devices' tag as well
                         self.result_found_dec_text.insert(tk.END, f"  - {devices}\n", "devices")
 
+                # Call to update button states
                 self.DATA.manipulation_window.update_button_states()
 
                 # Make the text widget read-only

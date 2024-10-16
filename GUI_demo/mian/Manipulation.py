@@ -15,7 +15,7 @@ class Manipulation(tk.Frame):
     def create_buttons(self):
             self.for_coil_frame()
             self.for_disc_inp_frame()
-
+            self.for_analog_inp_frame()
     def create_subframes(self):
         # Coil Frame
         self.coil_frame = tk.Frame(self, bg="gray", borderwidth=2, relief="groove", padx=10, pady=10)
@@ -161,8 +161,8 @@ class Manipulation(tk.Frame):
             for name, (address, state) in self.DATA.analog_input_addresses.items():
                 button = tk.Button(
                     self.analog_inp_frame,
-                    text=f"{name}: {'ON' if state else 'OFF'}",
-                    bg="green" if state else "red",
+                    text=f"{name}: {state}",  # Display initial state
+                    bg="green" if state > 0 else "red",  # Example coloring logic
                     command=lambda name=name: self.toggle_analog_inp_state(name)
                 )
                 button.pack(fill=tk.X, padx=5, pady=5)
@@ -175,12 +175,13 @@ class Manipulation(tk.Frame):
         # Retrieve the button for the specific name
         button = self.analog_inp_buttons.get(name)
 
-        # Toggle the state in DATA
-        state = not self.DATA.analog_input_addresses[name][1]  # Toggle the current state
-        self.DATA.analog_input_addresses[name] = (self.DATA.analog_input_addresses[name][0], state)
+        # Toggle the value in DATA (assuming analog inputs are continuous values)
+        current_value = self.DATA.analog_input_addresses[name][1]
+        new_value = current_value + 1 if current_value < 10 else 0  # Example toggle logic
+        self.DATA.analog_input_addresses[name] = (self.DATA.analog_input_addresses[name][0], new_value)
 
-        # Update the button appearance based on the new state
+        # Update the button appearance based on the new value
         button.config(
-            text=f"{name}: {'ON' if state else 'OFF'}",
-            bg="green" if state else "red"
+            text=f"{name}: {new_value}",
+            bg="green" if new_value > 0 else "red"
         )
