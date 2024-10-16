@@ -27,7 +27,7 @@ class Manipulation(tk.Frame):
         update_button = tk.Button(
             self.coil_frame,
             text="Update States",
-            command=self.update_button_states
+            command=self.DATA.connection_window.refresh_values
         )
         update_button.grid(row=0, column=3, padx=5, pady=5, sticky="e")
 
@@ -93,6 +93,25 @@ class Manipulation(tk.Frame):
             )
             button.pack(fill=tk.X, padx=5, pady=5)
 
+    def for_analog_inp_frame(self):
+        # Ensure buttons are only created once
+        if not self.analog_inp_buttons_created:
+            # Dictionary to hold analog input button references
+            self.analog_inp_buttons = {}
+
+            # Create buttons for each analog input address
+            for name, (address, state) in self.DATA.analog_input_addresses.items():
+                button = tk.Button(
+                    self.analog_inp_frame,
+                    text=f"{name}: {state}",  # Display initial state
+                    bg="green" if state > 0 else "red",  # Example coloring logic
+                    command=lambda name=name: self.toggle_analog_inp_state(name)
+                )
+                button.pack(fill=tk.X, padx=5, pady=5)
+                self.analog_inp_buttons[name] = button  # Store button reference
+
+            # Mark that the analog input buttons have been created
+            self.analog_inp_buttons_created = True
     def toggle_coil_state(self, name):
         # Toggle state for coils
         current_state = self.DATA.coil_addresses[name][1]
@@ -151,25 +170,7 @@ class Manipulation(tk.Frame):
                         bg="green" if state else "red"
                     )
 
-    def for_analog_inp_frame(self):
-        # Ensure buttons are only created once
-        if not self.analog_inp_buttons_created:
-            # Dictionary to hold analog input button references
-            self.analog_inp_buttons = {}
 
-            # Create buttons for each analog input address
-            for name, (address, state) in self.DATA.analog_input_addresses.items():
-                button = tk.Button(
-                    self.analog_inp_frame,
-                    text=f"{name}: {state}",  # Display initial state
-                    bg="green" if state > 0 else "red",  # Example coloring logic
-                    command=lambda name=name: self.toggle_analog_inp_state(name)
-                )
-                button.pack(fill=tk.X, padx=5, pady=5)
-                self.analog_inp_buttons[name] = button  # Store button reference
-
-            # Mark that the analog input buttons have been created
-            self.analog_inp_buttons_created = True
 
     def toggle_analog_inp_state(self, name):
         # Retrieve the button for the specific name

@@ -32,10 +32,8 @@ class Main_Window(tk.Tk):
         button2.pack(side="left")
 
         # Frame for pages (inside main_window_frame)
-        try:
-            self.DATA.manipulation_window = Manipulation(self.main_window_frame, self.DATA)
-        finally:
-                self.DATA.connection_window = Connection_page(self.main_window_frame,self.DATA)
+        self.DATA.connection_window = Connection_page(self.main_window_frame,self.DATA)
+        self.DATA.manipulation_window = Manipulation(self.main_window_frame, self.DATA)
 
         # Pack pages to fill main_window_frame, but hide them initially
         self.DATA.connection_window.pack(fill="both", expand=True)
