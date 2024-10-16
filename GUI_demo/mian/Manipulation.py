@@ -112,33 +112,6 @@ class Manipulation(tk.Frame):
 
             # Mark that the analog input buttons have been created
             self.analog_inp_buttons_created = True
-    def toggle_coil_state(self, name):
-        # Toggle state for coils
-        current_state = self.DATA.coil_addresses[name][1]
-        new_state = not current_state
-        self.DATA.coil_addresses[name][1] = new_state
-
-        # Find button and update appearance
-        for widget in self.coil_frame.winfo_children():
-            if isinstance(widget, tk.Button) and widget.cget("text").startswith(name):
-                widget.config(
-                    text=f"{name}: {'ON' if new_state else 'OFF'}",
-                    bg="green" if new_state else "red"
-                )
-
-    def toggle_discrete_input_state(self, name):
-        # Toggle state for discrete inputs
-        current_state = self.DATA.discrete_input_addresses[name][1]
-        new_state = not current_state
-        self.DATA.discrete_input_addresses[name][1] = new_state
-
-        # Find button and update appearance
-        for widget in self.dsc_inp_frame.winfo_children():
-            if isinstance(widget, tk.Button) and widget.cget("text").startswith(name):
-                widget.config(
-                    text=f"{name}: {'ON' if new_state else 'OFF'}",
-                    bg="green" if new_state else "red"
-                )
 
     def update_button_states(self):
         # Update buttons in coil_frame based on self.DATA.coil_addresses
@@ -183,17 +156,68 @@ class Manipulation(tk.Frame):
                         bg="green" if value > 0 else "red"
                     )
 
+    def toggle_coil_state(self, name):
+        # Toggle the state for the coil
+        current_state = self.DATA.coil_addresses[name][1]
+        new_state = not current_state
+        self.DATA.coil_addresses[name][1] = new_state
+
+        # Write the new state to the coil address
+        address = self.DATA.coil_addresses[name][0]
+        try:
+            # Writing to the coil with the new state
+            self.DATA.client.write_coil(address, new_state)
+            print(f"Coil {name} at address {address} set to {'ON' if new_state else 'OFF'}")
+
+            # Update button appearance
+            for widget in self.coil_frame.winfo_children():
+                if isinstance(widget, tk.Button) and widget.cget("text").startswith(name):
+                    widget.config(
+                        text=f"{name}: {'ON' if new_state else 'OFF'}",
+                        bg="green" if new_state else "red"
+                    )
+        except Exception as e:
+            print(f"Failed to write to coil {name} at address {address}: {e}")
+
+    def toggle_discrete_input_state(self, name):
+        # Read current state of discrete input
+        address = self.DATA.discrete_input_addresses[name][0]
+        try:
+            response = self.DATA.client.read_discrete_inputs(address, 1)
+            if not response.isError():
+                current_state = response.bits[0]
+                new_state = not current_state
+                self.DATA.discrete_input_addresses[name][1] = new_state  # Update state in DATA
+
+                # Update button appearance
+                for widget in self.dsc_inp_frame.winfo_children():
+                    if isinstance(widget, tk.Button) and widget.cget("text").startswith(name):
+                        widget.config(
+                            text=f"{name}: {'ON' if new_state else 'OFF'}",
+                            bg="green" if new_state else "red"
+                        )
+                print(f"Discrete Input {name} at address {address} toggled to {'ON' if new_state else 'OFF'}")
+            else:
+                print(f"Error reading discrete input {name} at address {address}")
+        except Exception as e:
+            print(f"Failed to read discrete input {name} at address {address}: {e}")
     def toggle_analog_inp_state(self, name):
-        # Retrieve the button for the specific name
-        button = self.analog_inp_buttons.get(name)
-
-        # Toggle the value in DATA (assuming analog inputs are continuous values)
+        # Retrieve the current value of the analog input
+        address = self.DATA.analog_input_addresses[name][0]
         current_value = self.DATA.analog_input_addresses[name][1]
-        new_value = current_value + 1 if current_value < 10 else 0  # Example toggle logic
-        self.DATA.analog_input_addresses[name] = (self.DATA.analog_input_addresses[name][0], new_value)
+        new_value = current_value + 1 if current_value < 10 else 0  # Example increment logic
 
-        # Update the button appearance based on the new value
-        button.config(
-            text=f"{name}: {new_value}",
-            bg="green" if new_value > 0 else "red"
-        )
+        try:
+            # Write the new value to the holding register
+            self.DATA.client.write_register(address, new_value)
+            self.DATA.analog_input_addresses[name] = (address, new_value)  # Update value in DATA
+
+            # Update button appearance
+            button = self.analog_inp_buttons.get(name)
+            button.config(
+                text=f"{name}: {new_value}",
+                bg="green" if new_value > 0 else "red"
+            )
+            print(f"Analog Input {name} at address {address} set to {new_value}")
+        except Exception as e:
+            print(f"Failed to write to analog input {name} at address {address}: {e}")
