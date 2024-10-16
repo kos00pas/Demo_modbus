@@ -141,7 +141,6 @@ class Manipulation(tk.Frame):
                 )
 
     def update_button_states(self):
-        # self.DATA.connection_window.refresh_values()
         # Update buttons in coil_frame based on self.DATA.coil_addresses
         for widget in self.coil_frame.winfo_children():
             if isinstance(widget, tk.Button):
@@ -170,7 +169,19 @@ class Manipulation(tk.Frame):
                         bg="green" if state else "red"
                     )
 
+        # Update buttons in analog_inp_frame based on self.DATA.analog_input_addresses
+        for widget in self.analog_inp_frame.winfo_children():
+            if isinstance(widget, tk.Button):
+                # Extract the name from the button's current text
+                name = widget.cget("text").split(":")[0]
 
+                # Check if the name exists in analog_input_addresses and update button if so
+                if name in self.DATA.analog_input_addresses:
+                    value = self.DATA.analog_input_addresses[name][1]
+                    widget.config(
+                        text=f"{name}: {value}",
+                        bg="green" if value > 0 else "red"
+                    )
 
     def toggle_analog_inp_state(self, name):
         # Retrieve the button for the specific name
