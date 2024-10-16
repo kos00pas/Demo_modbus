@@ -10,6 +10,7 @@ class Connection_page(tk.Frame):
 
         self.configure(bg="gray")
         self.DATA = database
+        self.get_host_ip()
 
         # Frame to hold connection_ip and buttons side by side
         top_frame = tk.Frame(self, bg="gray")
@@ -18,14 +19,15 @@ class Connection_page(tk.Frame):
         label_ip = tk.Label(top_frame, text="Add IP:")
         label_ip.pack(side="left", padx=5)
 
+        # Create Entry widget and pre-fill with IP address
         self.DATA.connection_ip = tk.Entry(top_frame, width=20)
         self.DATA.connection_ip.pack(side="left", padx=10)
+        self.DATA.connection_ip.insert(0, self.DATA.ip_address)  # Pre-fill with host IP address
 
         button_get = tk.Button(top_frame, text="Get Input", command=self.get_ip_and_connect)
         button_get.pack(side="left", padx=10)
 
-        self.button_refresh = tk.Button(top_frame, text="Refresh Values", command=self.refresh_values, state=tk.DISABLED)
-        self.button_refresh.pack(side="left", padx=10)
+
 
         # Label for connection result
         self.result__connection_label = tk.Label(self, text="")
@@ -39,7 +41,14 @@ class Connection_page(tk.Frame):
         self.result_found_dec_text.tag_configure("category", foreground="red")
         self.result_found_dec_text.tag_configure("devices", foreground="green")
 
+    def get_host_ip(self):
+        import socket
+        hostname = socket.gethostname()
+        self.DATA.ip_address = socket.gethostbyname(hostname)
+
+        print(f"Host IP Address: {self.DATA.ip_address}")
     def get_ip_and_connect(self):
+
         target_ip = self.DATA.connection_ip.get()
 
         if not self.is_valid_ip(target_ip):
@@ -58,11 +67,13 @@ class Connection_page(tk.Frame):
                 print(f"Modbus communication established with {target_ip}:{port}")
                 # Call the function for post-connection actions
                 self.refresh_values()
+                if not self.DATA.manipulation_data_already_created:
+                    self.DATA.manipulation_data_already_created=True
+                    self.DATA.manipulation_window.create_buttons()
                 return self.DATA.client
             else:
                 self.result__connection_label.config(text=f"Connection failed to {target_ip}:{port}", fg="red")
                 self.result_found_dec_text.delete("1.0", tk.END)  # Clear previous content
-                self.button_refresh.config(state=tk.DISABLED)
                 print(f"No Modbus communication with {target_ip}:{port}")
                 self.DATA.client.close()
         except Exception as e:
@@ -71,7 +82,6 @@ class Connection_page(tk.Frame):
 
             print(f"Error connecting to {target_ip}:{port}: {e}")
             self.DATA.client.close()
-            self.button_refresh.config(state=tk.DISABLED)
 
         return None
 
@@ -81,7 +91,6 @@ class Connection_page(tk.Frame):
             ipaddress.ip_address(ip)
             return True
         except ValueError:
-            self.button_refresh.config(state=tk.DISABLED)
             return False
 
 
@@ -93,12 +102,6 @@ class Connection_page(tk.Frame):
         client = self.DATA.client
         if client.connect():
             try:
-
-
-
-
-                self.button_refresh.config(state=tk.NORMAL)
-
                 # Extract addresses for max calculation
                 coil_addresses_only = [addr[0] for addr in self.DATA.coil_addresses.values()]
                 discrete_input_addresses_only = [addr[0] for addr in self.DATA.discrete_input_addresses.values()]
@@ -153,6 +156,8 @@ class Connection_page(tk.Frame):
                         # Insert other entries with the 'devices' tag as well
                         self.result_found_dec_text.insert(tk.END, f"  - {devices}\n", "devices")
 
+                self.DATA.manipulation_window.update_button_states()
+
                 # Make the text widget read-only
                 self.result_found_dec_text.config(state=tk.DISABLED)
 
@@ -162,7 +167,6 @@ class Connection_page(tk.Frame):
                 client.close()
         else:
             print("Unable to connect to the client")
-            self.button_refresh.config(state=tk.DISABLED)
 
 
 

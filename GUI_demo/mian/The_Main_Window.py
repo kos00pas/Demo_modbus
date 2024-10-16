@@ -32,25 +32,27 @@ class Main_Window(tk.Tk):
         button2.pack(side="left")
 
         # Frame for pages (inside main_window_frame)
-        self.DATA.connection_window = Connection_page(self.main_window_frame,self.DATA)
-        self.manipulation_window = Manipulation(self.main_window_frame, self.DATA)
+        try:
+            self.DATA.manipulation_window = Manipulation(self.main_window_frame, self.DATA)
+        finally:
+                self.DATA.connection_window = Connection_page(self.main_window_frame,self.DATA)
 
         # Pack pages to fill main_window_frame, but hide them initially
         self.DATA.connection_window.pack(fill="both", expand=True)
-        self.manipulation_window.pack(fill="both", expand=True)
+        self.DATA.manipulation_window.pack(fill="both", expand=True)
 
         # Show only the first page by default
         self.show_connection_window()
 
     def show_connection_window(self):
-        self.manipulation_window.pack_forget()
+        self.DATA.manipulation_window.pack_forget()
         self.DATA.connection_window.pack(fill="both", expand=True)
         self.DATA.connection_window.tkraise()
 
     def show_manipulation_window(self):
         self.DATA.connection_window.pack_forget()
-        self.manipulation_window.pack(fill="both", expand=True)
-        self.manipulation_window.tkraise()
+        self.DATA.manipulation_window.pack(fill="both", expand=True)
+        self.DATA.manipulation_window.tkraise()
 
     def setup_main_and_console_layout(self):
         paned_window = tk.PanedWindow(self, orient="horizontal")

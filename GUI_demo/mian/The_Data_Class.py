@@ -5,9 +5,13 @@ class Data_Class:
     def __init__(self,):
         self.connection_ip=None
         self.connection_window =None
+        self.manipulation_window=None
         self.main_window =None
         self.terminal_window =None
         self.client =None
+        self.buttons_created = False
+        self.ip_address =None
+        self.manipulation_data_already_created=False
         # Addresses for coils
         self.coil_addresses = {
             "Main_Conveyor": [0, False],

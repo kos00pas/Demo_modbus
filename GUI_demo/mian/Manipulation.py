@@ -6,7 +6,6 @@ class Manipulation(tk.Frame):
         super().__init__(parent)
         self.configure(bg="dark blue")
         self.DATA = database
-        self.buttons_created = False  # Flag to track button creation
 
         # Create the subframes (but don’t populate buttons yet)
         self.create_subframes()
@@ -14,10 +13,9 @@ class Manipulation(tk.Frame):
         # Attempt connection and create buttons if successful
 
     def create_buttons(self):
-        if not self.buttons_created:
             self.for_coil_frame()
             self.for_disc_inp_frame()
-            self.buttons_created = True
+
     def create_subframes(self):
         # Coil Frame
         self.coil_frame = tk.Frame(self, bg="gray", borderwidth=2, relief="groove", padx=10, pady=10)
@@ -37,18 +35,17 @@ class Manipulation(tk.Frame):
         self.dsc_inp_frame = tk.Frame(self, bg="gray", borderwidth=2, relief="groove", padx=10, pady=10)
         self.dsc_inp_frame.grid(row=0, column=2, sticky="nsew", padx=10, pady=10)
         dsc_inp_label = tk.Label(self.dsc_inp_frame, text="Discrete Input Frame")
-        dsc_inp_label.pack()  # Keeping pack here for the label
+        dsc_inp_label.pack()
 
-        # Analog Input Frame
-        analog_inp_frame = tk.Frame(self, bg="gray", borderwidth=2, relief="groove", padx=10, pady=10)
-        analog_inp_frame.grid(row=1, column=2, sticky="nsew", padx=10, pady=10)
-        analog_inp_label = tk.Label(analog_inp_frame, text="Analog Input Frame")
+        # Analog Input Frame (Future Frame)
+        self.analog_inp_frame = tk.Frame(self, bg="gray", borderwidth=2, relief="groove", padx=10, pady=10)
+        self.analog_inp_frame.grid(row=1, column=2, sticky="nsew", padx=10, pady=10)
+        analog_inp_label = tk.Label(self.analog_inp_frame, text="Analog Input Frame")
         analog_inp_label.pack()
 
-        # Configure the layout to ensure frames are resizable
-        self.grid_columnconfigure((0, 2), weight=1)
-        self.grid_rowconfigure(0, weight=5)  # Discrete Input Frame row
-        self.grid_rowconfigure(1, weight=1)  # Analog Input Frame row
+        # Flags for checking if buttons are created in each frame
+        self.disc_inp_buttons_created = False
+        self.analog_inp_buttons_created = False  # For future use with analog inputs
 
     def for_coil_frame(self):
         left_row = 1  # Starting row for left column
@@ -125,6 +122,7 @@ class Manipulation(tk.Frame):
                 )
 
     def update_button_states(self):
+        # self.DATA.connection_window.refresh_values()
         # Update buttons in coil_frame based on self.DATA.coil_addresses
         for widget in self.coil_frame.winfo_children():
             if isinstance(widget, tk.Button):
