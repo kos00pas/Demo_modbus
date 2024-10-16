@@ -94,17 +94,18 @@ class Connection_page(tk.Frame):
             return False
 
 
-    # Function to read and print the desired coil states, discrete inputs, and weight register
     def refresh_values(self):
         print("Running post-connection actions...")
         slave_id = 1  # Specify the slave ID
         found_devices = {}
         client = self.DATA.client
+
         if client.connect():
             try:
                 # Extract addresses for max calculation
                 coil_addresses_only = [addr[0] for addr in self.DATA.coil_addresses.values()]
                 discrete_input_addresses_only = [addr[0] for addr in self.DATA.discrete_input_addresses.values()]
+                analog_input_addresses_only = [addr[0] for addr in self.DATA.analog_input_addresses.values()]
 
                 # Read coils (total of highest index + 1)
                 response = client.read_coils(0, max(coil_addresses_only) + 1, slave=slave_id)
@@ -119,7 +120,7 @@ class Connection_page(tk.Frame):
                         found_devices['Coils'][name] = 'ON' if state else 'OFF'
                         print(f"{name} (Coil %QX{100 + address // 8}.{address % 8}): {'ON' if state else 'OFF'}")
 
-                # Read discrete inputs (total of highest index + 1)
+                # Read discrete inputs
                 response = client.read_discrete_inputs(0, max(discrete_input_addresses_only) + 1, slave=slave_id)
                 if response.isError():
                     print("Error reading discrete inputs")
@@ -132,16 +133,20 @@ class Connection_page(tk.Frame):
                         found_devices['Discrete Inputs'][name] = 'ON' if state else 'OFF'
                         print(f"{name} (Discrete %IX{100 + address // 8}.{address % 8}): {'ON' if state else 'OFF'}")
 
-                # Read input register at %IW100
-                response = client.read_input_registers(0, 1, slave=slave_id)
+                # Read input registers for analog inputs
+                response = client.read_input_registers(0, max(analog_input_addresses_only) + 1, slave=slave_id)
                 if response.isError():
-                    print("Error reading input register")
+                    print("Error reading input registers")
                 else:
-                    weight_value = response.registers[0]
-                    found_devices['Weight'] = weight_value
-                    print(f"Weight (Input Register %IW100): {weight_value}")
+                    print("Analog Input states:")
+                    found_devices['Analog Inputs'] = {}
+                    for name, (address, _) in self.DATA.analog_input_addresses.items():
+                        value = response.registers[address]
+                        self.DATA.analog_input_addresses[name] = (address, value)  # Update with new value
+                        found_devices['Analog Inputs'][name] = value
+                        print(f"{name} (Input Register %IW{100 + address}): {value}")
 
-                # Update the text widget
+                # Update the result_found_dec_text widget with the results
                 self.result_found_dec_text.config(state=tk.NORMAL)
                 self.result_found_dec_text.delete(1.0, tk.END)
 
@@ -150,7 +155,7 @@ class Connection_page(tk.Frame):
                     self.result_found_dec_text.insert(tk.END, f"\n{category}:\n", "category")
                     if isinstance(devices, dict):
                         for name, state in devices.items():
-                            # Insert each device name and state with the 'devices' tag for green color
+                            # Insert each device name and state/value with the 'devices' tag for green color
                             self.result_found_dec_text.insert(tk.END, f"  - {name}: {state}\n", "devices")
                     else:
                         # Insert other entries with the 'devices' tag as well
@@ -167,6 +172,7 @@ class Connection_page(tk.Frame):
                 client.close()
         else:
             print("Unable to connect to the client")
+
 
 
 
