@@ -94,7 +94,7 @@ class Connection_page(tk.Frame):
             return False
 
     def refresh_values(self):
-        print("Running post-connection actions...")
+        # print("Running post-connection actions...")
         slave_id = 1  # Specify the slave ID
         found_devices = {}
         client = self.DATA.client
