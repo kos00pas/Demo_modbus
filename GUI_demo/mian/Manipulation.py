@@ -150,3 +150,37 @@ class Manipulation(tk.Frame):
                         text=f"{name}: {'ON' if state else 'OFF'}",
                         bg="green" if state else "red"
                     )
+
+    def for_analog_inp_frame(self):
+        # Ensure buttons are only created once
+        if not self.analog_inp_buttons_created:
+            # Dictionary to hold analog input button references
+            self.analog_inp_buttons = {}
+
+            # Create buttons for each analog input address
+            for name, (address, state) in self.DATA.analog_input_addresses.items():
+                button = tk.Button(
+                    self.analog_inp_frame,
+                    text=f"{name}: {'ON' if state else 'OFF'}",
+                    bg="green" if state else "red",
+                    command=lambda name=name: self.toggle_analog_inp_state(name)
+                )
+                button.pack(fill=tk.X, padx=5, pady=5)
+                self.analog_inp_buttons[name] = button  # Store button reference
+
+            # Mark that the analog input buttons have been created
+            self.analog_inp_buttons_created = True
+
+    def toggle_analog_inp_state(self, name):
+        # Retrieve the button for the specific name
+        button = self.analog_inp_buttons.get(name)
+
+        # Toggle the state in DATA
+        state = not self.DATA.analog_input_addresses[name][1]  # Toggle the current state
+        self.DATA.analog_input_addresses[name] = (self.DATA.analog_input_addresses[name][0], state)
+
+        # Update the button appearance based on the new state
+        button.config(
+            text=f"{name}: {'ON' if state else 'OFF'}",
+            bg="green" if state else "red"
+        )
