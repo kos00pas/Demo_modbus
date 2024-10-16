@@ -1,8 +1,10 @@
 import tkinter as tk
 import sys
 import glob
-from collections import deque
 import re
+from collections import deque
+from io import StringIO
+
 
 class The_Terminal_Window(tk.Frame):
     def __init__(self, parent, on_close_callback):
@@ -27,10 +29,12 @@ class The_Terminal_Window(tk.Frame):
 
         # Redirect sys.stdout to the terminal window
         self.original_stdout = sys.stdout
+        self.capture_stdout = StringIO()
         sys.stdout = self  # Redirect standard output to this instance
 
         # Message queue, buffer, and scheduling of the output
         self.message_queue = deque()
+        self.priority_queue = []  # List for holding priority messages as tuples (priority, message)
         self.buffer = ""  # Buffer to hold characters to process in chunks
         self.file_buffer = ""  # Buffer for file content
         self.active_output = False  # Track if new print output is active
@@ -42,6 +46,11 @@ class The_Terminal_Window(tk.Frame):
         self.message_queue.append(message)
         self.active_output = True
 
+        # Print to both GUI and original stdout
+        self.capture_stdout.write(message)
+        self.original_stdout.write(message)  # Send to the IntelliJ terminal
+        self.original_stdout.flush()  # Ensure it flushes immediately
+
     def load_files_into_buffer(self):
         # Read all .py files in the directory and add their content to file_buffer
         files = glob.glob("*.py")  # Adjust the path as needed
@@ -49,8 +58,6 @@ class The_Terminal_Window(tk.Frame):
         for file_path in files:
             with open(file_path, 'r') as file:
                 self.file_buffer += file.read() + "\n"  # Separate each file content
-
-    import re
 
     def update_terminal(self):
         # Check if output is paused
@@ -133,3 +140,23 @@ class The_Terminal_Window(tk.Frame):
         # Restore the original stdout
         sys.stdout = self.original_stdout
         self.on_close_callback()
+
+
+    def add_message(self, text, priority=0):
+        """
+        Add a message to the queue with a specified priority.
+        Higher priority (higher number) messages will be processed first.
+        """
+        # Add the message as a tuple (priority, text) to the priority queue
+        self.priority_queue.append((priority, text))
+
+        # Sort the priority queue by priority in descending order
+        self.priority_queue.sort(reverse=True, key=lambda x: x[0])
+
+        # Add the sorted messages back to the main message queue
+        while self.priority_queue:
+            _, message = self.priority_queue.pop(0)
+            self.message_queue.appendleft(message)
+
+        # Activate output
+        self.active_output = True

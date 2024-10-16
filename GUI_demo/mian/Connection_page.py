@@ -118,7 +118,7 @@ class Connection_page(tk.Frame):
                         state = response.bits[address]
                         self.DATA.coil_addresses[name][1] = state  # Update the boolean value in the array
                         found_devices['Coils'][name] = 'ON' if state else 'OFF'
-                        print(f"{name} (Coil %QX{100 + address // 8}.{address % 8}): {'ON' if state else 'OFF'}")
+                        # print(f"{name} (Coil %QX{100 + address // 8}.{address % 8}): {'ON' if state else 'OFF'}")
 
                 # Read discrete inputs
                 response = client.read_discrete_inputs(0, max(discrete_input_addresses_only) + 1, slave=slave_id)
@@ -131,7 +131,7 @@ class Connection_page(tk.Frame):
                         state = response.bits[address]
                         self.DATA.discrete_input_addresses[name][1] = state  # Update the boolean value in the array
                         found_devices['Discrete Inputs'][name] = 'ON' if state else 'OFF'
-                        print(f"{name} (Discrete %IX{100 + address // 8}.{address % 8}): {'ON' if state else 'OFF'}")
+                        # print(f"{name} (Discrete %IX{100 + address // 8}.{address % 8}): {'ON' if state else 'OFF'}")
 
                 # Read input registers for analog inputs
                 response = client.read_input_registers(0, max(analog_input_addresses_only) + 1, slave=slave_id)
@@ -144,7 +144,7 @@ class Connection_page(tk.Frame):
                         value = response.registers[address]
                         self.DATA.analog_input_addresses[name] = (address, value)  # Update with new value
                         found_devices['Analog Inputs'][name] = value
-                        print(f"{name} (Input Register %IW{100 + address}): {value}")
+                        # print(f"{name} (Input Register %IW{100 + address}): {value}")
 
                 # Update the text widget
                 self.result_found_dec_text.config(state=tk.NORMAL)
@@ -163,8 +163,8 @@ class Connection_page(tk.Frame):
 
                 # Call to update button states
                 self.DATA.manipulation_window.update_button_states()
-
-                # Make the text widget read-only
+                text_content = self.result_found_dec_text.get("1.0", tk.END).strip()
+                self.DATA.terminal_window.add_message(text_content)                # Make the text widget read-only
                 self.result_found_dec_text.config(state=tk.DISABLED)
 
             except Exception as e:
