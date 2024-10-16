@@ -2,7 +2,7 @@ import tkinter as tk
 import sys
 import glob
 from collections import deque
-import random
+import re
 
 class The_Terminal_Window(tk.Frame):
     def __init__(self, parent, on_close_callback):
@@ -50,6 +50,8 @@ class The_Terminal_Window(tk.Frame):
             with open(file_path, 'r') as file:
                 self.file_buffer += file.read() + "\n"  # Separate each file content
 
+    import re
+
     def update_terminal(self):
         # Check if output is paused
         if self.output_paused:
@@ -67,17 +69,15 @@ class The_Terminal_Window(tk.Frame):
             # Display up to 100 characters from the buffer
             chunk = self.buffer[:100]
 
-            # Split chunk into words and determine red words
-            words = chunk.split()
-            num_red_words = max(1, len(words) // 10)  # Ensure at least one word is red if possible
-            red_indices = set(random.sample(range(len(words)), num_red_words))
+            # Find all parts in the chunk, treating numbers differently
+            parts = re.split(r'(\d+)', chunk)  # Split by digits
 
-            # Insert each word, coloring 10% of them red
-            for i, word in enumerate(words):
-                if i in red_indices:
-                    self.terminal.insert(tk.END, word + " ", ("red",))
+            # Insert each part, coloring numbers red
+            for part in parts:
+                if part.isdigit():  # Check if the part is a number
+                    self.terminal.insert(tk.END, part, ("red",))
                 else:
-                    self.terminal.insert(tk.END, word + " ", ("green",))
+                    self.terminal.insert(tk.END, part, ("green",))
 
             # Configure tags for color
             self.terminal.tag_config("green", foreground="green")
@@ -98,17 +98,15 @@ class The_Terminal_Window(tk.Frame):
             self.terminal.config(state=tk.NORMAL)
             chunk = self.file_buffer[:100]
 
-            # Split chunk into words and determine red words
-            words = chunk.split()
-            num_red_words = max(1, len(words) // 10)
-            red_indices = set(random.sample(range(len(words)), num_red_words))
+            # Find all parts in the chunk, treating numbers differently
+            parts = re.split(r'(\d+)', chunk)
 
-            # Insert each word, coloring 10% of them red
-            for i, word in enumerate(words):
-                if i in red_indices:
-                    self.terminal.insert(tk.END, word + " ", ("red",))
+            # Insert each part, coloring numbers red
+            for part in parts:
+                if part.isdigit():
+                    self.terminal.insert(tk.END, part, ("red",))
                 else:
-                    self.terminal.insert(tk.END, word + " ", ("green",))
+                    self.terminal.insert(tk.END, part, ("green",))
 
             # Update the widget
             self.terminal.config(state=tk.DISABLED)
