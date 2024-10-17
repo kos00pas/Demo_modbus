@@ -111,15 +111,27 @@ class Manipulation(tk.Frame):
 
             # Mark that the analog input buttons have been created
             self.analog_inp_buttons_created = True
+
     def for_persistent_manipulation_frame(self):
         self.persistent_manipulation_buttons = {}  # Dictionary to store coil buttons by name
         self.analog_input_entries = {}  # Dictionary to store analog input entries by name
         self.analog_input_labels = {}  # Dictionary to store analog input labels by name
 
-        # Row 0: Persistent Manipulation label across all columns
+        # Row 0: Persistent Manipulation label and Duration Entry
         main_label = tk.Label(self.persistent_manipulation_frame, text="Persistent Manipulation",
                               font=("Arial", 14, "bold"))
-        main_label.grid(row=0, column=0, columnspan=6, padx=5, pady=5, sticky="nsew")
+        main_label.grid(row=0, column=0, columnspan=3, padx=5, pady=5, sticky="w")
+
+        # Duration label and entry
+        duration_label = tk.Label(self.persistent_manipulation_frame, text="Duration (s):")
+        duration_label.grid(row=0, column=3, padx=5, pady=5, sticky="e")
+
+        # Bind the label click to save the duration
+        duration_label.bind("<Button-1>", lambda e: self.save_duration())
+
+        self.duration_entry = tk.Entry(self.persistent_manipulation_frame, width=5)
+        self.duration_entry.grid(row=0, column=4, padx=5, pady=5, sticky="w")
+        self.duration_entry.insert(0, "10")  # Default value for 10 seconds
 
         # Row 1: Column headers for coils and analog inputs
         coil_label = tk.Label(self.persistent_manipulation_frame, text="Coils", font=("Arial", 10, "bold"))
@@ -182,6 +194,7 @@ class Manipulation(tk.Frame):
             self.analog_input_entries[name] = entry  # Store entry widget reference for future use
 
             row += 1  # Move to the next row for the next analog input
+
     def for_persistent_destruction_frame(self):
         # Create the frame for Persistent Destruction next to Persistent Manipulation
         self.persistent_destruction_frame = tk.Frame(self, bg="dark red", borderwidth=2, relief="groove", padx=10,
@@ -405,6 +418,17 @@ class Manipulation(tk.Frame):
                         text=f"{name}: {value}",
                         bg="green" if value > 0 else "red"
                     )
+
+    def save_duration(self):
+        # Get the duration value from the entry widget
+        duration_str = self.duration_entry.get()
+
+        # Check if the input is a positive integer
+        if duration_str.isdigit() and int(duration_str) > 0:
+            duration = int(duration_str)
+            print(f"Duration set to {duration} seconds.")
+        else:
+            print("Invalid duration entered. Please enter a positive integer.")
 
 
 
