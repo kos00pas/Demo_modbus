@@ -142,6 +142,11 @@ class Manipulation(tk.Frame):
         self.interval_entry.grid(row=0, column=6, padx=5, pady=5, sticky="w")
         self.interval_entry.insert(0, "70")  # Default value for 250 ms
 
+        # Clear All button
+        clear_all_button = tk.Button(self.persistent_manipulation_frame, text="Clear All",
+                                     command=self.clear_all_persistent_writes)
+        clear_all_button.grid(row=0, column=7, padx=5, pady=5, sticky="w")
+
         # Row 1: Column headers for coils and analog inputs
         coil_label = tk.Label(self.persistent_manipulation_frame, text="Coils", font=("Arial", 10, "bold"))
         coil_label.grid(row=1, column=0, columnspan=4, padx=5, pady=5, sticky="nsew")  # Header for coil buttons
@@ -333,18 +338,8 @@ class Manipulation(tk.Frame):
             if duration <= 0:
                 raise ValueError("Duration must be a positive integer.")
         except ValueError:
-            duration = 100
+            duration = 10
             print("Invalid duration entered, defaulting to 10 seconds.")
-
-        # Read and validate the interval from the entry widget
-        interval_str = self.interval_entry.get()
-        try:
-            interval = int(interval_str)
-            if interval <= 0:
-                raise ValueError("Interval must be a positive integer.")
-        except ValueError:
-            interval = 70
-            print("Invalid interval entered, defaulting to 250 milliseconds.")
 
         start_time = time.time()  # Track the start time
 
@@ -355,6 +350,16 @@ class Manipulation(tk.Frame):
 
             # Only proceed if the button color matches the current persistent state
             if button_color == expected_color:
+                # Retrieve the interval dynamically from the entry field
+                interval_str = self.interval_entry.get()
+                try:
+                    interval = int(interval_str)
+                    if interval <= 0:
+                        raise ValueError("Interval must be a positive integer.")
+                except ValueError:
+                    interval = 250
+                    print("Invalid interval entered, defaulting to 250 milliseconds.")
+
                 # Send the write_coil command with the current write_value
                 address = self.DATA.coil_addresses[name][0]
                 try:
@@ -366,6 +371,7 @@ class Manipulation(tk.Frame):
 
                 # Schedule the next write if the duration has not elapsed
                 if (time.time() - start_time) < duration:
+                    # Dynamically adjust the interval on each call
                     self.after(interval, send_write_coil)
                 else:
                     # Turn the coil OFF after the duration ends, regardless of initial write_value
@@ -452,6 +458,14 @@ class Manipulation(tk.Frame):
             print(f"Interval set to {interval} milliseconds.")
         else:
             print("Invalid interval entered. Please enter a positive integer.")
+
+    def clear_all_persistent_writes(self):
+        # Reset all persistent manipulation buttons to white
+        for name, button in self.persistent_manipulation_buttons.items():
+            button.config(bg="white")
+
+        # Print a confirmation message
+        print("All persistent writes cleared and buttons reset to white.")
 
 
 
