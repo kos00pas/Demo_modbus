@@ -307,7 +307,44 @@ class Manipulation(tk.Frame):
             self.after(duration * 1000, lambda b=button: b.config(bg="white"))
 
     def persistent_destruction_all_opposite(self):
-        pass
+        try:
+            # Retrieve and validate the interval directly from the entry field
+            interval = int(self.interval_entry.get())
+            if interval <= 0:
+                print("Interval must be a positive number.")
+                return
+        except ValueError:
+            print("Invalid interval input. Please enter a numeric value.")
+            return
+
+        print("Starting all-opposite destruction...")
+
+        # Define a nested function for toggling each coil to its opposite state
+        def toggle_opposite():
+            for name, (address, _) in self.DATA.coil_addresses.items():
+                # Read the current state from the client
+                try:
+                    current_state = self.DATA.client.read_coils(address, 1).bits[0]
+                    opposite_state = not current_state
+                    # Write the opposite state to the coil
+                    self.DATA.client.write_coil(address, opposite_state)
+                    print(f"Toggled {name} to {'ON' if opposite_state else 'OFF'}")
+
+                    # Update button color
+                    button = self.persistent_manipulation_buttons.get(name)
+                    if button:
+                        button.config(bg="light green" if opposite_state else "salmon")
+                except Exception as e:
+                    print(f"Error reading/writing coil {name} at address {address}: {e}")
+
+            # Schedule the next toggle based on the interval
+            if "all_opposite" in self.active_jobs:
+                job_id = self.after(interval, toggle_opposite)
+                self.active_jobs["all_opposite"] = job_id
+
+        # Start the toggling action
+        job_id = self.after(interval, toggle_opposite)
+        self.active_jobs["all_opposite"] = job_id
 
     def persistent_destruction_all_forward(self):
         print("Persistent Destruction: Button 4 action triggered")
