@@ -201,7 +201,7 @@ class Manipulation(tk.Frame):
         destruction_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
 
         # Add six buttons in a vertical arrangement and bind them to specific destruction functions
-        button_names = ["All ON", "ALL OFF", "Button 3", "Button 4", "Button 5", "Button 6"]
+        button_names = ["All ON", "ALL OFF", "ALL LEFT", "ALL RIGHT", "ALL FORWARD", "ALL OPPOSITE"]
         functions = [
             self.persistent_destruction_all_on,
             self.persistent_destruction_all_off,
