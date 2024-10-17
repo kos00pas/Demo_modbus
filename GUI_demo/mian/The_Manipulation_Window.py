@@ -16,6 +16,7 @@ class Manipulation(tk.Frame):
             self.for_disc_inp_frame()
             self.for_analog_inp_frame()
             self.for_persistent_manipulation_frame()
+            self.for_persistent_destruction_frame()
 
 
 
@@ -332,3 +333,41 @@ class Manipulation(tk.Frame):
         # Reset button color to white
         if name in self.persistent_manipulation_buttons:
             self.persistent_manipulation_buttons[name].config(bg="white")
+
+    def for_persistent_destruction_frame(self):
+        # Create the frame for Persistent Destruction next to Persistent Manipulation
+        self.persistent_destruction_frame = tk.Frame(self, bg="dark red", borderwidth=2, relief="groove", padx=10,
+                                                     pady=10)
+        self.persistent_destruction_frame.grid(row=2, column=2, rowspan=3, sticky="nsew", padx=10, pady=10)
+
+        # Title label for the frame
+        title_label = tk.Label(self.persistent_destruction_frame, text="Persistent Destruction",
+                               font=("Arial", 14, "bold"))
+        title_label.grid(row=0, column=0, columnspan=2, pady=5)
+
+        # Initialize button states dictionary
+        self.destruction_buttons = {}  # Store button references by their number
+        self.destruction_button_states = [False] * 6  # Initialize all button states as disabled (not pressed)
+
+        # Create 6 buttons in the frame with toggle functionality
+        for i in range(6):
+            button = tk.Button(
+                self.persistent_destruction_frame,
+                text=f"Button {i + 1}",
+                bg="white",
+                command=lambda idx=i: self.toggle_destruction_button(idx)
+            )
+            button.grid(row=i + 1, column=0, padx=5, pady=5, sticky="ew")
+            self.destruction_buttons[i] = button  # Store button reference
+
+    def toggle_destruction_button(self, index):
+        # Toggle the button state
+        self.destruction_button_states[index] = not self.destruction_button_states[index]
+
+        # Update button color and print its number if enabled
+        if self.destruction_button_states[index]:
+            self.destruction_buttons[index].config(bg="green")
+            print(f"Button {index + 1} is enabled.")
+        else:
+            self.destruction_buttons[index].config(bg="white")
+
