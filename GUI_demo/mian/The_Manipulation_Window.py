@@ -116,11 +116,12 @@ class Manipulation(tk.Frame):
             self.analog_inp_buttons_created = True
 
     def for_persistent_manipulation_frame(self):
-        self.persistent_manipulation_buttons = {}  # Dictionary to store coil buttons by name
-        self.analog_input_entries = {}  # Dictionary to store analog input entries by name
-        self.analog_input_labels = {}  # Dictionary to store analog input labels by name
+        # Set up dictionaries to store button and entry widgets
+        self.persistent_manipulation_buttons = {}  # Coil buttons by name
+        self.analog_input_entries = {}  # Analog input entries by name
+        self.analog_input_labels = {}  # Analog input labels by name
 
-        # Row 0: Persistent Manipulation label and Duration/Interval Entry
+        # Row 0: Persistent Manipulation label, Duration & Interval Entries
         main_label = tk.Label(self.persistent_manipulation_frame, text="Persistent Manipulation",
                               font=("Arial", 14, "bold"))
         main_label.grid(row=0, column=0, columnspan=3, padx=5, pady=5, sticky="w")
@@ -132,7 +133,7 @@ class Manipulation(tk.Frame):
 
         self.duration_entry = tk.Entry(self.persistent_manipulation_frame, width=5)
         self.duration_entry.grid(row=0, column=4, padx=5, pady=5, sticky="w")
-        self.duration_entry.insert(0, "15")  # Default value for 10 seconds
+        self.duration_entry.insert(0, "20")  # Default duration value
 
         # Interval label and entry
         interval_label = tk.Label(self.persistent_manipulation_frame, text="Interval (ms):")
@@ -141,47 +142,45 @@ class Manipulation(tk.Frame):
 
         self.interval_entry = tk.Entry(self.persistent_manipulation_frame, width=5)
         self.interval_entry.grid(row=0, column=6, padx=5, pady=5, sticky="w")
-        self.interval_entry.insert(0, "180")  # Default value for 250 ms
+        self.interval_entry.insert(0, "100")  # Default interval value
 
-        # Clear All button
-        clear_all_button = tk.Button(self.persistent_manipulation_frame, text="Clear All",
-                                     command=self.clear_all)
-        clear_all_button.grid(row=0, column=7, padx=5, pady=5, sticky="w")
+        # Clear All button next to Duration & Interval entries
+        clear_button = tk.Button(
+            self.persistent_manipulation_frame,
+            text="Clear All",
+            command=self.clear_all,
+            bg="red",
+            fg="white"
+        )
+        clear_button.grid(row=0, column=7, padx=5, pady=5, sticky="w")
 
-        # Row 1: Column headers for coils and analog inputs
+        # Row 1: Headers for coils and analog inputs
         coil_label = tk.Label(self.persistent_manipulation_frame, text="Coils", font=("Arial", 10, "bold"))
-        coil_label.grid(row=1, column=0, columnspan=4, padx=5, pady=5, sticky="nsew")  # Header for coil buttons
+        coil_label.grid(row=1, column=0, columnspan=3, padx=5, pady=5, sticky="nsew")  # Coil header
 
         analog_label = tk.Label(self.persistent_manipulation_frame, text="Analog Inputs", font=("Arial", 10, "bold"))
-        analog_label.grid(row=1, column=4, columnspan=3, padx=5, pady=5, sticky="nsew")  # Header for analog inputs
+        analog_label.grid(row=1, column=4, columnspan=3, padx=5, pady=5, sticky="nsew")  # Analog inputs header
 
-        # Persistent Manipulation Buttons (Starting from row 2)
-        left_row = 2  # Starting row for left column
-        center_row = 2  # Starting row for center column
-        right_row = 2  # Starting row for right column
-        both_row = 2  # Starting row for the fourth column (either both or repeated "left"/"right")
+        # Row 2 onward: Coils and Analog Input Buttons
+        left_row = 2
+        center_row = 2
+        right_row = 2
 
-        for name, _ in self.DATA.coil_addresses.items():
-            # Check for multiple occurrences or both "left" and "right"
-            if name.lower().count("left") > 1 or name.lower().count("right") > 1 or (
-                    "left" in name.lower() and "right" in name.lower()):
-                column = 3
-                row = both_row
-                both_row += 1  # Increment row counter for fourth column
-            elif "left" in name.lower():
+        for name, (address, _) in self.DATA.coil_addresses.items():
+            if "left" in name.lower():
                 column = 0
                 row = left_row
-                left_row += 1  # Increment left column row counter
+                left_row += 1
             elif "right" in name.lower():
                 column = 2
                 row = right_row
-                right_row += 1  # Increment right column row counter
+                right_row += 1
             else:
                 column = 1
                 row = center_row
-                center_row += 1  # Increment center column row counter
+                center_row += 1
 
-            # Create and place the button
+            # Create coil button
             button = tk.Button(
                 self.persistent_manipulation_frame,
                 text=name,
@@ -189,7 +188,66 @@ class Manipulation(tk.Frame):
                 command=lambda name=name: self.toggle_persistent_manipulation_state(name)
             )
             button.grid(row=row, column=column, padx=5, pady=5, sticky="ew")
-            self.persistent_manipulation_buttons[name] = button  # Store button reference
+            self.persistent_manipulation_buttons[name] = button
+
+        # Analog Input Section
+        for i, (name, (address, _)) in enumerate(self.DATA.analog_input_addresses.items(), start=2):
+            analog_input_label = tk.Label(self.persistent_manipulation_frame, text=name)
+            analog_input_label.grid(row=i, column=4, padx=5, pady=5, sticky="w")
+            self.analog_input_labels[name] = analog_input_label
+
+            analog_input_entry = tk.Entry(self.persistent_manipulation_frame, width=10)
+            analog_input_entry.grid(row=i, column=5, padx=5, pady=5, sticky="w")
+            self.analog_input_entries[name] = analog_input_entry
+
+            set_button = tk.Button(
+                self.persistent_manipulation_frame,
+                text="Set",
+                command=lambda name=name: self.set_analog_input_value(name)
+            )
+            set_button.grid(row=i, column=6, padx=5, pady=5, sticky="w")
+
+    def set_analog_input_value(self, name):
+        try:
+            # Retrieve and validate the value from the entry
+            value = int(self.analog_input_entries[name].get())
+            print(f"Setting analog input '{name}' to value: {value}")
+
+            # Set interval to constant 50ms
+            interval = 50
+            duration = int(self.duration_entry.get()) * 1000  # Convert duration to milliseconds
+
+            # Start persistent writing of the value
+            def write_value():
+                self.DATA.client.write_register(self.DATA.analog_input_addresses[name][0], value)
+                print(
+                    f"Writing value {value} to analog input '{name}' at address {self.DATA.analog_input_addresses[name][0]}")
+
+                # Update the monitoring frame with the new value
+                if name in self.analog_inp_buttons:
+                    self.analog_inp_buttons[name].config(text=f"{name}: {value}")
+
+                # Schedule the next write if the job is still active
+                if name in self.active_jobs:
+                    self.active_jobs[name] = self.after(interval, write_value)
+
+            # Set up the duration timer to stop after the specified time
+            if name in self.active_jobs:
+                self.after_cancel(self.active_jobs[name])  # Cancel any existing job for this name
+            self.active_jobs[name] = self.after(interval, write_value)
+
+            # Clear the job after duration
+            self.after(duration, lambda: self.clear_job(name))
+
+        except ValueError:
+            print("Invalid input for analog input value; must be an integer.")
+
+    def clear_job(self, name):
+        """Clears the active job for a specific analog input."""
+        if name in self.active_jobs:
+            self.after_cancel(self.active_jobs[name])
+            del self.active_jobs[name]
+            print(f"Stopped writing to analog input '{name}'")
 
     def for_persistent_destruction_frame(self):
         # Create a new subframe for Persistent Destruction within the main manipulation frame
@@ -328,7 +386,7 @@ class Manipulation(tk.Frame):
                     opposite_state = not current_state
                     # Write the opposite state to the coil
                     self.DATA.client.write_coil(address, opposite_state)
-                    print(f"Toggled {name} to {'ON' if opposite_state else 'OFF'}")
+                    # print(f"Toggled {name} to {'ON' if opposite_state else 'OFF'}")
 
                     # Update button color
                     button = self.persistent_manipulation_buttons.get(name)
