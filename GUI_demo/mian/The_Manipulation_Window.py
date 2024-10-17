@@ -17,63 +17,7 @@ class Manipulation(tk.Frame):
             self.for_analog_inp_frame()
             self.for_persistent_manipulation_frame()
 
-    def for_persistent_manipulation_frame(self):
-        self.persistent_manipulation_buttons = {}  # Dictionary to store buttons by name
-        left_row = 1
-        center_row = 1
-        right_row = 1
-        both_row = 1
 
-        for name, _ in self.DATA.coil_addresses.items():
-            if name.lower().count("left") > 1 or name.lower().count("right") > 1 or (
-                    "left" in name.lower() and "right" in name.lower()):
-                column = 3
-                row = both_row
-                both_row += 1
-            elif "left" in name.lower():
-                column = 0
-                row = left_row
-                left_row += 1
-            elif "right" in name.lower():
-                column = 2
-                row = right_row
-                right_row += 1
-            else:
-                column = 1
-                row = center_row
-                center_row += 1
-
-            # Create a button with an initial white background and color-changing command
-            button = tk.Button(
-                self.persistent_manipulation_frame,
-                text=name,
-                bg="white",
-                command=lambda name=name: self.toggle_persistent_manipulation_state(name)
-            )
-            button.grid(row=row, column=column, padx=5, pady=5, sticky="ew")
-            self.persistent_manipulation_buttons[name] = button
-
-    def toggle_persistent_manipulation_state(self, name):
-        # Get the current button and its color
-        button = self.persistent_manipulation_buttons[name]
-        current_color = button.cget("bg")
-
-        # Cycle through the colors: white ->  light green-> thistle -> white
-        if current_color == "white":
-            new_color = "light green"
-        elif current_color == "light green":
-            new_color = "thistle"
-        else:
-            new_color = "white"
-
-        # Update the button color
-        button.config(bg=new_color)
-        print(f"Button '{name}' color changed to {new_color}")
-
-    def deactivate_button(self, name):
-        # Reset button color to white
-        if name in self.persistent_manipulation_buttons:
-            self.persistent_manipulation_buttons[name].config(bg="white")
 
     def create_subframes(self):
         # Coil Frame
@@ -278,3 +222,62 @@ class Manipulation(tk.Frame):
             print(f"Analog Input {name} at address {address} set to {new_value}")
         except Exception as e:
             print(f"Failed to write to analog input {name} at address {address}: {e}")
+
+    def for_persistent_manipulation_frame(self):
+            self.persistent_manipulation_buttons = {}  # Dictionary to store buttons by name
+            left_row = 1
+            center_row = 1
+            right_row = 1
+            both_row = 1
+
+            for name, _ in self.DATA.coil_addresses.items():
+                if name.lower().count("left") > 1 or name.lower().count("right") > 1 or (
+                        "left" in name.lower() and "right" in name.lower()):
+                    column = 3
+                    row = both_row
+                    both_row += 1
+                elif "left" in name.lower():
+                    column = 0
+                    row = left_row
+                    left_row += 1
+                elif "right" in name.lower():
+                    column = 2
+                    row = right_row
+                    right_row += 1
+                else:
+                    column = 1
+                    row = center_row
+                    center_row += 1
+
+                # Create a button with an initial white background and color-changing command
+                button = tk.Button(
+                    self.persistent_manipulation_frame,
+                    text=name,
+                    bg="white",
+                    command=lambda name=name: self.toggle_persistent_manipulation_state(name)
+                )
+                button.grid(row=row, column=column, padx=5, pady=5, sticky="ew")
+                self.persistent_manipulation_buttons[name] = button
+
+    def toggle_persistent_manipulation_state(self, name):
+        # Get the current button and its color
+        print(name)
+        button = self.persistent_manipulation_buttons[name]
+        current_color = button.cget("bg")
+
+        # Cycle through the colors: white ->  light green-> thistle -> white
+        if current_color == "white":
+            new_color = "light green"
+        elif current_color == "light green":
+            new_color = "thistle"
+        else:
+            new_color = "white"
+
+        # Update the button color
+        button.config(bg=new_color)
+        print(f"Button '{name}' color changed to {new_color}")
+
+    def deactivate_button(self, name):
+        # Reset button color to white
+        if name in self.persistent_manipulation_buttons:
+            self.persistent_manipulation_buttons[name].config(bg="white")
