@@ -1,5 +1,5 @@
 import tkinter as tk
-
+import time
 
 class Manipulation(tk.Frame):
     def __init__(self, parent, database):
@@ -289,23 +289,64 @@ class Manipulation(tk.Frame):
         # Update the label color
         label.config(bg=new_color)
         print(f"Analog Input Label '{name}' color changed to {new_color}")
+
+    import time
+
     def toggle_persistent_manipulation_state(self, name):
-        # Get the current button and its color
-        print(name)
+        # Get the button and its current color
         button = self.persistent_manipulation_buttons[name]
         current_color = button.cget("bg")
 
-        # Cycle through the colors: white ->  light green-> thistle -> white
+        # Cycle through colors: white -> light green -> white
         if current_color == "white":
             new_color = "light green"
-        elif current_color == "light green":
-            new_color = "thistle"
+            button.config(bg=new_color)
+            print(f"Persistent Manipulation button '{name}' is set to {new_color}")
+
+            # Start persistent coil writing if light green
+            self.start_persistent_write(name)
         else:
             new_color = "white"
+            button.config(bg=new_color)
+            print(f"Persistent Manipulation button '{name}' is reset to {new_color}")
 
-        # Update the button color
-        button.config(bg=new_color)
-        print(f"Button '{name}' color changed to {new_color}")
+    def start_persistent_write(self, name):
+        # Duration for the write command to stay active
+        duration = 3  # seconds
+        interval = 250  # milliseconds
+
+        # Track the start time to measure duration
+        start_time = time.time()
+
+        def send_write_coil():
+            # Check if the button is still in the light green state
+            if self.persistent_manipulation_buttons[name].cget("bg") == "light green":
+                # Send the write_coil command
+                address = self.DATA.coil_addresses[name][0]
+                try:
+                    self.DATA.client.write_coil(address, True)
+                    print(f"Writing ON to coil '{name}' at address {address}")
+                except Exception as e:
+                    print(f"Error writing to coil '{name}': {e}")
+
+                # Schedule the next write if the duration has not elapsed
+                if (time.time() - start_time) < duration:
+                    self.after(interval, send_write_coil)  # Call again after 250 ms
+                else:
+                    # Turn the coil OFF after the duration ends
+                    try:
+                        self.DATA.client.write_coil(address, False)
+                        print(f"Turning OFF coil '{name}' after 10 seconds")
+                    except Exception as e:
+                        print(f"Error turning off coil '{name}': {e}")
+
+                    # Reset the button color to white
+                    self.persistent_manipulation_buttons[name].config(bg="white")
+                    print(f"Button '{name}' color reset to white after duration.")
+
+        # Initial call to start the loop
+        send_write_coil()
+
     def toggle_persistent_destruction_button(self, index):
         # Toggle the button state
         self.destruction_button_states[index] = not self.destruction_button_states[index]
