@@ -131,7 +131,7 @@ class Manipulation(tk.Frame):
 
         self.duration_entry = tk.Entry(self.persistent_manipulation_frame, width=5)
         self.duration_entry.grid(row=0, column=4, padx=5, pady=5, sticky="w")
-        self.duration_entry.insert(0, "100")  # Default value for 10 seconds
+        self.duration_entry.insert(0, "15")  # Default value for 10 seconds
 
         # Interval label and entry
         interval_label = tk.Label(self.persistent_manipulation_frame, text="Interval (ms):")
@@ -140,7 +140,7 @@ class Manipulation(tk.Frame):
 
         self.interval_entry = tk.Entry(self.persistent_manipulation_frame, width=5)
         self.interval_entry.grid(row=0, column=6, padx=5, pady=5, sticky="w")
-        self.interval_entry.insert(0, "70")  # Default value for 250 ms
+        self.interval_entry.insert(0, "180")  # Default value for 250 ms
 
         # Clear All button
         clear_all_button = tk.Button(self.persistent_manipulation_frame, text="Clear All",
@@ -191,32 +191,131 @@ class Manipulation(tk.Frame):
             self.persistent_manipulation_buttons[name] = button  # Store button reference
 
     def for_persistent_destruction_frame(self):
-        # Create the frame for Persistent Destruction next to Persistent Manipulation
-        self.persistent_destruction_frame = tk.Frame(self, bg="dark red", borderwidth=2, relief="groove", padx=10,
-                                                     pady=10)
-        self.persistent_destruction_frame.grid(row=2, column=2, rowspan=3, sticky="nsew", padx=10, pady=10)
+        # Create a new subframe for Persistent Destruction within the main manipulation frame
+        self.persistent_destruction_frame = tk.Frame(self, bg="dark red", borderwidth=2, relief="groove", padx=10, pady=5)
+        self.persistent_destruction_frame.grid(row=2, column=2, rowspan=2, sticky="nsew", padx=10, pady=5)
 
-        # Title label for the frame
-        title_label = tk.Label(self.persistent_destruction_frame, text="Persistent Destruction",
-                               font=("Arial", 14, "bold"))
-        title_label.grid(row=0, column=0, columnspan=2, pady=5)
+        # Add the main label for the destruction frame
+        destruction_label = tk.Label(self.persistent_destruction_frame, text="Persistent Destruction",
+                                     font=("Arial", 14, "bold"))
+        destruction_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
 
-        # Initialize button states dictionary
-        self.destruction_buttons = {}  # Store button references by their number
-        self.destruction_button_states = [False] * 6  # Initialize all button states as disabled (not pressed)
+        # Add six buttons in a vertical arrangement and bind them to specific destruction functions
+        button_names = ["All ON", "ALL OFF", "Button 3", "Button 4", "Button 5", "Button 6"]
+        functions = [
+            self.persistent_destruction_all_on,
+            self.persistent_destruction_all_off,
+            self.persistent_destruction_button3,
+            self.persistent_destruction_button4,
+            self.persistent_destruction_button5,
+            self.persistent_destruction_button6
+        ]
 
-        # Create 6 buttons in the frame with toggle functionality
-        for i in range(6):
+        for i, (name, function) in enumerate(zip(button_names, functions)):
             button = tk.Button(
                 self.persistent_destruction_frame,
-                text=f"Button {i + 1}",
+                text=name,
+                command=function,
                 bg="white",
-                command=lambda idx=i: self.toggle_persistent_destruction_button(idx)
+                width=15
             )
-            button.grid(row=i + 1, column=0, padx=5, pady=5, sticky="ew")
-            self.destruction_buttons[i] = button  # Store button reference
+            button.grid(row=i + 1, column=0, padx=5, pady=5)  # Place each button in the next row for vertical alignment
 
+    def persistent_destruction_all_on(self):
+        print("Persistent Destruction: All ON action triggered")
 
+        # Get the duration and interval from Persistent Manipulation entries
+        try:
+            duration = int(self.duration_entry.get())
+            interval = int(self.interval_entry.get())
+        except ValueError:
+            print("Invalid duration or interval values.")
+            return
+
+        # Dictionary to keep track of job IDs for each coil
+        self.destruction_jobs = {}  # Initialize/reset the dictionary each time All ON is pressed
+
+        # Loop through all coil buttons in the Persistent Manipulation subframe
+        for name, button in self.persistent_manipulation_buttons.items():
+            # Set the button to light green to indicate the ON state
+            button.config(bg="light green")
+
+            # Get the address of the specific coil
+            address = self.DATA.coil_addresses[name][0]
+
+            # Define a function to repeatedly write ON to the coil
+            def send_persistent_on(coil_name=name, address=address):
+                try:
+                    self.DATA.client.write_coil(address, True)  # Send the ON command
+                    # print(f"Writing ON to coil '{coil_name}' at address {address}")
+                except Exception as e:
+                    print(f"Failed to write ON to coil '{coil_name}' at address {address}: {e}")
+
+            # Schedule the ON writes for the coil at the specified interval for the duration
+            job_ids = []
+            for i in range(0, duration * 1000, interval):
+                job_id = self.after(i, send_persistent_on)
+                job_ids.append(job_id)
+
+            # Store the job IDs for this coil to allow clearing later
+            self.destruction_jobs[name] = job_ids
+
+            # Schedule a final job to reset the button to white after the duration
+            self.after(duration * 1000, lambda b=button: b.config(bg="white"))
+
+    def persistent_destruction_all_off(self):
+        print("Persistent Destruction: All OFF action triggered")
+
+        # Get the duration and interval from Persistent Manipulation entries
+        try:
+            duration = int(self.duration_entry.get())
+            interval = int(self.interval_entry.get())
+        except ValueError:
+            print("Invalid duration or interval values.")
+            return
+
+        # Dictionary to keep track of job IDs for each coil
+        self.destruction_jobs_off = {}  # Initialize/reset the dictionary each time All OFF is pressed
+
+        # Loop through all coil buttons in the Persistent Manipulation subframe
+        for name, button in self.persistent_manipulation_buttons.items():
+            # Set the button to light red to indicate the OFF state
+            button.config(bg="light salmon")
+
+            # Get the address of the specific coil
+            address = self.DATA.coil_addresses[name][0]
+
+            # Define a function to repeatedly write OFF to the coil
+            def send_persistent_off(coil_name=name, address=address):
+                try:
+                    self.DATA.client.write_coil(address, False)  # Send the OFF command
+                    # print(f"Writing OFF to coil '{coil_name}' at address {address}")
+                except Exception as e:
+                    print(f"Failed to write OFF to coil '{coil_name}' at address {address}: {e}")
+
+            # Schedule the OFF writes for the coil at the specified interval for the duration
+            job_ids = []
+            for i in range(0, duration * 1000, interval):
+                job_id = self.after(i, send_persistent_off)
+                job_ids.append(job_id)
+
+            # Store the job IDs for this coil to allow clearing later
+            self.destruction_jobs_off[name] = job_ids
+
+            # Schedule a final job to reset the button to white after the duration
+            self.after(duration * 1000, lambda b=button: b.config(bg="white"))
+
+    def persistent_destruction_button3(self):
+        print("Persistent Destruction: Button 3 action triggered")
+
+    def persistent_destruction_button4(self):
+        print("Persistent Destruction: Button 4 action triggered")
+
+    def persistent_destruction_button5(self):
+        print("Persistent Destruction: Button 5 action triggered")
+
+    def persistent_destruction_button6(self):
+        print("Persistent Destruction: Button 6 action triggered")
 
     def toggle_coil_state(self, name):
         # Toggle the state for the coil
@@ -460,12 +559,18 @@ class Manipulation(tk.Frame):
             print("Invalid interval entered. Please enter a positive integer.")
 
     def clear_all_persistent_writes(self):
-        # Reset all persistent manipulation buttons to white
-        for name, button in self.persistent_manipulation_buttons.items():
-            button.config(bg="white")
+        print("Clearing all persistent writes")
 
-        # Print a confirmation message
-        print("All persistent writes cleared and buttons reset to white.")
+        # Clear any scheduled persistent jobs for coils
+        if hasattr(self, 'destruction_jobs'):
+            for job_ids in self.destruction_jobs.values():
+                for job_id in job_ids:
+                    self.after_cancel(job_id)
+            self.destruction_jobs.clear()
+
+        # Reset all buttons in Persistent Manipulation subframe to white
+        for button in self.persistent_manipulation_buttons.values():
+            button.config(bg="white")
 
 
 
