@@ -82,7 +82,6 @@ class Manipulation(tk.Frame):
                 command=lambda name=name: self.toggle_coil_state(name)
             )
             button.grid(row=row, column=column, padx=5, pady=5, sticky="ew")
-
     def for_disc_inp_frame(self):
         for name, (address, state) in self.DATA.discrete_input_addresses.items():
 
@@ -93,7 +92,6 @@ class Manipulation(tk.Frame):
                 command=lambda name=name: self.toggle_discrete_input_state(name)
             )
             button.pack(fill=tk.X, padx=5, pady=5)
-
     def for_analog_inp_frame(self):
         # Ensure buttons are only created once
         if not self.analog_inp_buttons_created:
@@ -113,117 +111,6 @@ class Manipulation(tk.Frame):
 
             # Mark that the analog input buttons have been created
             self.analog_inp_buttons_created = True
-
-    def update_button_states(self):
-        # Update buttons in coil_frame based on self.DATA.coil_addresses
-        for widget in self.coil_frame.winfo_children():
-            if isinstance(widget, tk.Button):
-                # Extract the name from the button's current text
-                name = widget.cget("text").split(":")[0]
-
-                # Check if the name exists in coil_addresses and update button if so
-                if name in self.DATA.coil_addresses:
-                    state = self.DATA.coil_addresses[name][1]
-                    widget.config(
-                        text=f"{name}: {'ON' if state else 'OFF'}",
-                        bg="green" if state else "red"
-                    )
-
-        # Update buttons in dsc_inp_frame based on self.DATA.discrete_input_addresses
-        for widget in self.dsc_inp_frame.winfo_children():
-            if isinstance(widget, tk.Button):
-                # Extract the name from the button's current text
-                name = widget.cget("text").split(":")[0]
-
-                # Check if the name exists in discrete_input_addresses and update button if so
-                if name in self.DATA.discrete_input_addresses:
-                    state = self.DATA.discrete_input_addresses[name][1]
-                    widget.config(
-                        text=f"{name}: {'ON' if state else 'OFF'}",
-                        bg="green" if state else "red"
-                    )
-
-        # Update buttons in analog_inp_frame based on self.DATA.analog_input_addresses
-        for widget in self.analog_inp_frame.winfo_children():
-            if isinstance(widget, tk.Button):
-                # Extract the name from the button's current text
-                name = widget.cget("text").split(":")[0]
-
-                # Check if the name exists in analog_input_addresses and update button if so
-                if name in self.DATA.analog_input_addresses:
-                    value = self.DATA.analog_input_addresses[name][1]
-                    widget.config(
-                        text=f"{name}: {value}",
-                        bg="green" if value > 0 else "red"
-                    )
-
-    def toggle_coil_state(self, name):
-        # Toggle the state for the coil
-        current_state = self.DATA.coil_addresses[name][1]
-        new_state = not current_state
-        self.DATA.coil_addresses[name][1] = new_state
-
-        # Write the new state to the coil address
-        address = self.DATA.coil_addresses[name][0]
-        try:
-            # Writing to the coil with the new state
-            self.DATA.client.write_coil(address, new_state)
-            print(f"Coil {name} at address {address} set to {'ON' if new_state else 'OFF'}")
-
-            # Update button appearance in coil_frame
-            for widget in self.coil_frame.winfo_children():
-                if isinstance(widget, tk.Button) and widget.cget("text").startswith(name):
-                    widget.config(
-                        text=f"{name}: {'ON' if new_state else 'OFF'}",
-                        bg="green" if new_state else "red"
-                    )
-
-        except Exception as e:
-            print(f"Failed to write to coil {name} at address {address}: {e}")
-
-    def toggle_discrete_input_state(self, name):
-        # Read current state of discrete input
-        address = self.DATA.discrete_input_addresses[name][0]
-        try:
-            response = self.DATA.client.read_discrete_inputs(address, 1)
-            if not response.isError():
-                current_state = response.bits[0]
-                new_state = not current_state
-                self.DATA.discrete_input_addresses[name][1] = new_state  # Update state in DATA
-
-                # Update button appearance
-                for widget in self.dsc_inp_frame.winfo_children():
-                    if isinstance(widget, tk.Button) and widget.cget("text").startswith(name):
-                        widget.config(
-                            text=f"{name}: {'ON' if new_state else 'OFF'}",
-                            bg="green" if new_state else "red"
-                        )
-                print(f"Discrete Input {name} at address {address} toggled to {'ON' if new_state else 'OFF'}")
-            else:
-                print(f"Error reading discrete input {name} at address {address}")
-        except Exception as e:
-            print(f"Failed to read discrete input {name} at address {address}: {e}")
-    def toggle_analog_inp_state(self, name):
-        # Retrieve the current value of the analog input
-        address = self.DATA.analog_input_addresses[name][0]
-        current_value = self.DATA.analog_input_addresses[name][1]
-        new_value = current_value + 1 if current_value < 10 else 0  # Example increment logic
-
-        try:
-            # Write the new value to the holding register
-            self.DATA.client.write_register(address, new_value)
-            self.DATA.analog_input_addresses[name] = (address, new_value)  # Update value in DATA
-
-            # Update button appearance
-            button = self.analog_inp_buttons.get(name)
-            button.config(
-                text=f"{name}: {new_value}",
-                bg="green" if new_value > 0 else "red"
-            )
-            print(f"Analog Input {name} at address {address} set to {new_value}")
-        except Exception as e:
-            print(f"Failed to write to analog input {name} at address {address}: {e}")
-
     def for_persistent_manipulation_frame(self):
         self.persistent_manipulation_buttons = {}  # Dictionary to store coil buttons by name
         self.analog_input_entries = {}  # Dictionary to store analog input entries by name
@@ -295,45 +182,6 @@ class Manipulation(tk.Frame):
             self.analog_input_entries[name] = entry  # Store entry widget reference for future use
 
             row += 1  # Move to the next row for the next analog input
-
-    def toggle_analog_label_color(self, name):
-        # Get the current label and its background color
-        label = self.analog_input_labels[name]
-        current_color = label.cget("bg")
-
-        # Cycle through the colors: white -> light green -> white
-        if current_color == "white":
-            new_color = "light green"
-        else:
-            new_color = "white"
-
-        # Update the label color
-        label.config(bg=new_color)
-        print(f"Analog Input Label '{name}' color changed to {new_color}")
-
-    def toggle_persistent_manipulation_state(self, name):
-        # Get the current button and its color
-        print(name)
-        button = self.persistent_manipulation_buttons[name]
-        current_color = button.cget("bg")
-
-        # Cycle through the colors: white ->  light green-> thistle -> white
-        if current_color == "white":
-            new_color = "light green"
-        elif current_color == "light green":
-            new_color = "thistle"
-        else:
-            new_color = "white"
-
-        # Update the button color
-        button.config(bg=new_color)
-        print(f"Button '{name}' color changed to {new_color}")
-
-    def deactivate_button(self, name):
-        # Reset button color to white
-        if name in self.persistent_manipulation_buttons:
-            self.persistent_manipulation_buttons[name].config(bg="white")
-
     def for_persistent_destruction_frame(self):
         # Create the frame for Persistent Destruction next to Persistent Manipulation
         self.persistent_destruction_frame = tk.Frame(self, bg="dark red", borderwidth=2, relief="groove", padx=10,
@@ -355,12 +203,110 @@ class Manipulation(tk.Frame):
                 self.persistent_destruction_frame,
                 text=f"Button {i + 1}",
                 bg="white",
-                command=lambda idx=i: self.toggle_destruction_button(idx)
+                command=lambda idx=i: self.toggle_persistent_destruction_button(idx)
             )
             button.grid(row=i + 1, column=0, padx=5, pady=5, sticky="ew")
             self.destruction_buttons[i] = button  # Store button reference
 
-    def toggle_destruction_button(self, index):
+
+
+    def toggle_coil_state(self, name):
+        # Toggle the state for the coil
+        current_state = self.DATA.coil_addresses[name][1]
+        new_state = not current_state
+        self.DATA.coil_addresses[name][1] = new_state
+
+        # Write the new state to the coil address
+        address = self.DATA.coil_addresses[name][0]
+        try:
+            # Writing to the coil with the new state
+            self.DATA.client.write_coil(address, new_state)
+            print(f"Coil {name} at address {address} set to {'ON' if new_state else 'OFF'}")
+
+            # Update button appearance in coil_frame
+            for widget in self.coil_frame.winfo_children():
+                if isinstance(widget, tk.Button) and widget.cget("text").startswith(name):
+                    widget.config(
+                        text=f"{name}: {'ON' if new_state else 'OFF'}",
+                        bg="green" if new_state else "red"
+                    )
+
+        except Exception as e:
+            print(f"Failed to write to coil {name} at address {address}: {e}")
+    def toggle_discrete_input_state(self, name):
+        # Read current state of discrete input
+        address = self.DATA.discrete_input_addresses[name][0]
+        try:
+            response = self.DATA.client.read_discrete_inputs(address, 1)
+            if not response.isError():
+                current_state = response.bits[0]
+                new_state = not current_state
+                self.DATA.discrete_input_addresses[name][1] = new_state  # Update state in DATA
+
+                # Update button appearance
+                for widget in self.dsc_inp_frame.winfo_children():
+                    if isinstance(widget, tk.Button) and widget.cget("text").startswith(name):
+                        widget.config(
+                            text=f"{name}: {'ON' if new_state else 'OFF'}",
+                            bg="green" if new_state else "red"
+                        )
+                print(f"Discrete Input {name} at address {address} toggled to {'ON' if new_state else 'OFF'}")
+            else:
+                print(f"Error reading discrete input {name} at address {address}")
+        except Exception as e:
+            print(f"Failed to read discrete input {name} at address {address}: {e}")
+    def toggle_analog_inp_state(self, name):
+        # Retrieve the current value of the analog input
+        address = self.DATA.analog_input_addresses[name][0]
+        current_value = self.DATA.analog_input_addresses[name][1]
+        new_value = current_value + 1 if current_value < 10 else 0  # Example increment logic
+
+        try:
+            # Write the new value to the holding register
+            self.DATA.client.write_register(address, new_value)
+            self.DATA.analog_input_addresses[name] = (address, new_value)  # Update value in DATA
+
+            # Update button appearance
+            button = self.analog_inp_buttons.get(name)
+            button.config(
+                text=f"{name}: {new_value}",
+                bg="green" if new_value > 0 else "red"
+            )
+            print(f"Analog Input {name} at address {address} set to {new_value}")
+        except Exception as e:
+            print(f"Failed to write to analog input {name} at address {address}: {e}")
+    def toggle_analog_label_color(self, name):
+        # Get the current label and its background color
+        label = self.analog_input_labels[name]
+        current_color = label.cget("bg")
+
+        # Cycle through the colors: white -> light green -> white
+        if current_color == "white":
+            new_color = "light green"
+        else:
+            new_color = "white"
+
+        # Update the label color
+        label.config(bg=new_color)
+        print(f"Analog Input Label '{name}' color changed to {new_color}")
+    def toggle_persistent_manipulation_state(self, name):
+        # Get the current button and its color
+        print(name)
+        button = self.persistent_manipulation_buttons[name]
+        current_color = button.cget("bg")
+
+        # Cycle through the colors: white ->  light green-> thistle -> white
+        if current_color == "white":
+            new_color = "light green"
+        elif current_color == "light green":
+            new_color = "thistle"
+        else:
+            new_color = "white"
+
+        # Update the button color
+        button.config(bg=new_color)
+        print(f"Button '{name}' color changed to {new_color}")
+    def toggle_persistent_destruction_button(self, index):
         # Toggle the button state
         self.destruction_button_states[index] = not self.destruction_button_states[index]
 
@@ -370,4 +316,54 @@ class Manipulation(tk.Frame):
             print(f"Button {index + 1} is enabled.")
         else:
             self.destruction_buttons[index].config(bg="white")
+
+
+    def deactivate_button(self, name):
+        # Reset button color to white
+        if name in self.persistent_manipulation_buttons:
+            self.persistent_manipulation_buttons[name].config(bg="white")
+    def update_button_states(self):
+        # Update buttons in coil_frame based on self.DATA.coil_addresses
+        for widget in self.coil_frame.winfo_children():
+            if isinstance(widget, tk.Button):
+                # Extract the name from the button's current text
+                name = widget.cget("text").split(":")[0]
+
+                # Check if the name exists in coil_addresses and update button if so
+                if name in self.DATA.coil_addresses:
+                    state = self.DATA.coil_addresses[name][1]
+                    widget.config(
+                        text=f"{name}: {'ON' if state else 'OFF'}",
+                        bg="green" if state else "red"
+                    )
+
+        # Update buttons in dsc_inp_frame based on self.DATA.discrete_input_addresses
+        for widget in self.dsc_inp_frame.winfo_children():
+            if isinstance(widget, tk.Button):
+                # Extract the name from the button's current text
+                name = widget.cget("text").split(":")[0]
+
+                # Check if the name exists in discrete_input_addresses and update button if so
+                if name in self.DATA.discrete_input_addresses:
+                    state = self.DATA.discrete_input_addresses[name][1]
+                    widget.config(
+                        text=f"{name}: {'ON' if state else 'OFF'}",
+                        bg="green" if state else "red"
+                    )
+
+        # Update buttons in analog_inp_frame based on self.DATA.analog_input_addresses
+        for widget in self.analog_inp_frame.winfo_children():
+            if isinstance(widget, tk.Button):
+                # Extract the name from the button's current text
+                name = widget.cget("text").split(":")[0]
+
+                # Check if the name exists in analog_input_addresses and update button if so
+                if name in self.DATA.analog_input_addresses:
+                    value = self.DATA.analog_input_addresses[name][1]
+                    widget.config(
+                        text=f"{name}: {value}",
+                        bg="green" if value > 0 else "red"
+                    )
+
+
 
