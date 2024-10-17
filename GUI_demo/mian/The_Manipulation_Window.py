@@ -324,12 +324,20 @@ class Manipulation(tk.Frame):
             print(f"Persistent Manipulation button '{name}' is reset to {new_color}")
 
     def start_persistent_write(self, name):
-        # Duration for the write command to stay active
-        duration = 3  # seconds
-        interval = 250  # milliseconds
+        # Read and validate the duration from the entry widget
+        duration_str = self.duration_entry.get()
+        try:
+            # Ensure duration is a positive integer
+            duration = int(duration_str)
+            if duration <= 0:
+                raise ValueError("Duration must be a positive integer.")
+        except ValueError:
+            # Default to 10 seconds if input is invalid
+            duration = 10
+            print("Invalid duration entered, defaulting to 10 seconds.")
 
-        # Track the start time to measure duration
-        start_time = time.time()
+        interval = 50  # milliseconds
+        start_time = time.time()  # Track the start time
 
         def send_write_coil():
             # Check if the button is still in the light green state
@@ -349,7 +357,7 @@ class Manipulation(tk.Frame):
                     # Turn the coil OFF after the duration ends
                     try:
                         self.DATA.client.write_coil(address, False)
-                        print(f"Turning OFF coil '{name}' after 10 seconds")
+                        print(f"Turning OFF coil '{name}' after {duration} seconds")
                     except Exception as e:
                         print(f"Error turning off coil '{name}': {e}")
 
