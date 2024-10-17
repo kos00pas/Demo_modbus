@@ -214,14 +214,13 @@ class Manipulation(tk.Frame):
             print(f"Setting analog input '{name}' to value: {value}")
 
             # Set interval to constant 50ms
-            interval = 50
+            interval = 20
             duration = int(self.duration_entry.get()) * 1000  # Convert duration to milliseconds
 
             # Start persistent writing of the value
             def write_value():
                 self.DATA.client.write_register(self.DATA.analog_input_addresses[name][0], value)
-                print(
-                    f"Writing value {value} to analog input '{name}' at address {self.DATA.analog_input_addresses[name][0]}")
+                # print(                    f"Writing value {value} to analog input '{name}' at address {self.DATA.analog_input_addresses[name][0]}")
 
                 # Update the monitoring frame with the new value
                 if name in self.analog_inp_buttons:
@@ -260,13 +259,10 @@ class Manipulation(tk.Frame):
         destruction_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
 
         # Add six buttons in a vertical arrangement and bind them to specific destruction functions
-        button_names = ["All ON", "ALL OFF", "ALL LEFT", "ALL RIGHT", "ALL FORWARD", "ALL OPPOSITE"]
+        button_names = ["All ON", "ALL OFF", "ALL OPPOSITE"]
         functions = [
             self.persistent_destruction_all_on,
             self.persistent_destruction_all_off,
-            self.persistent_destruction_all_left,
-            self.persistent_destruction_all_right,
-            self.persistent_destruction_all_forward,
             self.persistent_destruction_all_opposite
         ]
 
@@ -404,14 +400,7 @@ class Manipulation(tk.Frame):
         job_id = self.after(interval, toggle_opposite)
         self.active_jobs["all_opposite"] = job_id
 
-    def persistent_destruction_all_forward(self):
-        print("Persistent Destruction: Button 4 action triggered")
 
-    def persistent_destruction_all_right(self):
-        print("Persistent Destruction: Button 5 action triggered")
-
-    def persistent_destruction_all_left(self):
-        print("Persistent Destruction: Button 6 action triggered")
 
     def toggle_coil_state(self, name):
         # Toggle the state for the coil
