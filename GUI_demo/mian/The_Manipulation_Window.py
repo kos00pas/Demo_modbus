@@ -309,7 +309,7 @@ class Manipulation(tk.Frame):
         button = self.persistent_manipulation_buttons[name]
         current_color = button.cget("bg")
 
-        # Cycle through colors: white -> light green (write 1) -> light red (write 0) -> white
+        # Cycle through colors: white -> light green (write 1) -> salmon (write 0) -> white
         if current_color == "white":
             new_color = "light green"
             button.config(bg=new_color)
@@ -317,7 +317,7 @@ class Manipulation(tk.Frame):
             # Start persistent write with value 1
             self.start_persistent_write(name, True)
         elif current_color == "light green":
-            new_color = "light red"
+            new_color = "salmon"  # Replacing "light red" with "salmon"
             button.config(bg=new_color)
             print(f"Persistent Manipulation button '{name}' set to {new_color} (write 0)")
             # Start persistent write with value 0
@@ -340,17 +340,17 @@ class Manipulation(tk.Frame):
             duration = 10
             print("Invalid duration entered, defaulting to 10 seconds.")
 
-        interval = 100  # milliseconds
+        interval =75  # milliseconds
         start_time = time.time()  # Track the start time
 
         def send_write_coil():
             # Check if the button is still in the appropriate color state for this write operation
             button_color = self.persistent_manipulation_buttons[name].cget("bg")
-            expected_color = "light green" if write_value else "light red"
+            expected_color = "light green" if write_value else "salmon"
 
             # Only proceed if the button color matches the current persistent state
             if button_color == expected_color:
-                # Send the write_coil command
+                # Send the write_coil command with the current write_value
                 address = self.DATA.coil_addresses[name][0]
                 try:
                     self.DATA.client.write_coil(address, write_value)
@@ -363,7 +363,7 @@ class Manipulation(tk.Frame):
                 if (time.time() - start_time) < duration:
                     self.after(interval, send_write_coil)  # Call again after 250 ms
                 else:
-                    # Turn the coil OFF after the duration ends
+                    # Turn the coil OFF after the duration ends, regardless of initial write_value
                     try:
                         self.DATA.client.write_coil(address, False)
                         print(f"Turning OFF coil '{name}' after {duration} seconds")
@@ -373,6 +373,8 @@ class Manipulation(tk.Frame):
                     # Reset the button color to white after duration completes
                     self.persistent_manipulation_buttons[name].config(bg="white")
                     print(f"Button '{name}' color reset to white after duration.")
+            else:
+                print(f"Skipping write for '{name}', as button color has changed from {expected_color}.")
 
         # Initial call to start the loop
         send_write_coil()
@@ -446,6 +448,7 @@ class Manipulation(tk.Frame):
             print(f"Duration set to {duration} seconds.")
         else:
             print("Invalid duration entered. Please enter a positive integer.")
+
 
 
 
