@@ -224,40 +224,91 @@ class Manipulation(tk.Frame):
             print(f"Failed to write to analog input {name} at address {address}: {e}")
 
     def for_persistent_manipulation_frame(self):
-            self.persistent_manipulation_buttons = {}  # Dictionary to store buttons by name
-            left_row = 1
-            center_row = 1
-            right_row = 1
-            both_row = 1
+        self.persistent_manipulation_buttons = {}  # Dictionary to store coil buttons by name
+        self.analog_input_entries = {}  # Dictionary to store analog input entries by name
+        self.analog_input_labels = {}  # Dictionary to store analog input labels by name
 
-            for name, _ in self.DATA.coil_addresses.items():
-                if name.lower().count("left") > 1 or name.lower().count("right") > 1 or (
-                        "left" in name.lower() and "right" in name.lower()):
-                    column = 3
-                    row = both_row
-                    both_row += 1
-                elif "left" in name.lower():
-                    column = 0
-                    row = left_row
-                    left_row += 1
-                elif "right" in name.lower():
-                    column = 2
-                    row = right_row
-                    right_row += 1
-                else:
-                    column = 1
-                    row = center_row
-                    center_row += 1
+        # Row 0: Persistent Manipulation label across all columns
+        main_label = tk.Label(self.persistent_manipulation_frame, text="Persistent Manipulation",
+                              font=("Arial", 14, "bold"))
+        main_label.grid(row=0, column=0, columnspan=6, padx=5, pady=5, sticky="nsew")
 
-                # Create a button with an initial white background and color-changing command
-                button = tk.Button(
-                    self.persistent_manipulation_frame,
-                    text=name,
-                    bg="white",
-                    command=lambda name=name: self.toggle_persistent_manipulation_state(name)
-                )
-                button.grid(row=row, column=column, padx=5, pady=5, sticky="ew")
-                self.persistent_manipulation_buttons[name] = button
+        # Row 1: Column headers for coils and analog inputs
+        coil_label = tk.Label(self.persistent_manipulation_frame, text="Coils", font=("Arial", 10, "bold"))
+        coil_label.grid(row=1, column=0, columnspan=4, padx=5, pady=5, sticky="nsew")  # Header for coil buttons
+
+        analog_label = tk.Label(self.persistent_manipulation_frame, text="Analog Inputs", font=("Arial", 10, "bold"))
+        analog_label.grid(row=1, column=4, columnspan=2, padx=5, pady=5, sticky="nsew")  # Header for analog inputs
+
+        # Start adding coil buttons from row 2
+        row = 2  # Start from row 2 due to new headers
+
+        # Coils in columns 0, 1, 2, and 3
+        left_row = row
+        center_row = row
+        right_row = row
+        both_row = row
+
+        for name, _ in self.DATA.coil_addresses.items():
+            if name.lower().count("left") > 1 or name.lower().count("right") > 1 or (
+                    "left" in name.lower() and "right" in name.lower()):
+                column = 3
+                row = both_row
+                both_row += 1
+            elif "left" in name.lower():
+                column = 0
+                row = left_row
+                left_row += 1
+            elif "right" in name.lower():
+                column = 2
+                row = right_row
+                right_row += 1
+            else:
+                column = 1
+                row = center_row
+                center_row += 1
+
+            # Create a button with an initial white background and color-changing command
+            button = tk.Button(
+                self.persistent_manipulation_frame,
+                text=name,
+                bg="white",
+                command=lambda name=name: self.toggle_persistent_manipulation_state(name)
+            )
+            button.grid(row=row, column=column, padx=5, pady=5, sticky="ew")
+            self.persistent_manipulation_buttons[name] = button
+
+        # Analog Input Labels and Entries in columns 4 and 5, starting from row 2
+        row = 2  # Reset row for analog input elements
+        for name, (address, value) in self.DATA.analog_input_addresses.items():
+            # Create a label with the name of the analog input and a command to cycle colors
+            label = tk.Label(self.persistent_manipulation_frame, text=name, bg="white")
+            label.grid(row=row, column=4, padx=5, pady=5, sticky="e")  # Align label to the right
+            label.bind("<Button-1>", lambda e, name=name: self.toggle_analog_label_color(name))  # Bind click event
+            self.analog_input_labels[name] = label  # Store label reference for future use
+
+            # Create an entry widget for the analog input value
+            entry = tk.Entry(self.persistent_manipulation_frame, width=10)
+            entry.grid(row=row, column=5, padx=5, pady=5, sticky="w")  # Align entry to the left
+            entry.insert(0, str(value))  # Set initial value from DATA
+            self.analog_input_entries[name] = entry  # Store entry widget reference for future use
+
+            row += 1  # Move to the next row for the next analog input
+
+    def toggle_analog_label_color(self, name):
+        # Get the current label and its background color
+        label = self.analog_input_labels[name]
+        current_color = label.cget("bg")
+
+        # Cycle through the colors: white -> light green -> white
+        if current_color == "white":
+            new_color = "light green"
+        else:
+            new_color = "white"
+
+        # Update the label color
+        label.config(bg=new_color)
+        print(f"Analog Input Label '{name}' color changed to {new_color}")
 
     def toggle_persistent_manipulation_state(self, name):
         # Get the current button and its color
