@@ -142,7 +142,7 @@ class Manipulation(tk.Frame):
 
         self.interval_entry = tk.Entry(self.persistent_manipulation_frame, width=5)
         self.interval_entry.grid(row=0, column=6, padx=5, pady=5, sticky="w")
-        self.interval_entry.insert(0, "100")  # Default interval value
+        self.interval_entry.insert(0, "80")  # Default interval value
 
         # Clear All button next to Duration & Interval entries
         clear_button = tk.Button(
