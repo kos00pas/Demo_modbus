@@ -142,7 +142,7 @@ class Manipulation(tk.Frame):
 
         self.interval_entry = tk.Entry(self.persistent_manipulation_frame, width=5)
         self.interval_entry.grid(row=0, column=6, padx=5, pady=5, sticky="w")
-        self.interval_entry.insert(0, "80")  # Default interval value
+        self.interval_entry.insert(0, "140")  # Default interval value
 
         # Clear All button next to Duration & Interval entries
         clear_button = tk.Button(
@@ -278,6 +278,7 @@ class Manipulation(tk.Frame):
 
     def persistent_destruction_all_on(self):
         print("Persistent Destruction: All ON action triggered")
+        self.clear_all()
 
         # Get the duration and interval from Persistent Manipulation entries
         try:
@@ -320,6 +321,7 @@ class Manipulation(tk.Frame):
 
     def persistent_destruction_all_off(self):
         print("Persistent Destruction: All OFF action triggered")
+        self.clear_all()
 
         # Get the duration and interval from Persistent Manipulation entries
         try:
@@ -361,6 +363,8 @@ class Manipulation(tk.Frame):
             self.after(duration * 1000, lambda b=button: b.config(bg="white"))
 
     def persistent_destruction_all_opposite(self):
+        self.clear_all()
+
         try:
             # Retrieve and validate the interval directly from the entry field
             interval = int(self.interval_entry.get())
@@ -659,20 +663,28 @@ class Manipulation(tk.Frame):
 
     def clear_all(self):
         # Cancel all active coil manipulation jobs
-        for job_id in self.active_jobs.values():
+        for job_id in list(self.active_jobs.values()):
             self.after_cancel(job_id)
         self.active_jobs.clear()
 
-        # Reset all buttons in the persistent manipulation subframe to white
+        # Also cancel any jobs related to destruction (if exists)
+        if hasattr(self, 'destruction_jobs'):
+            for job_ids in self.destruction_jobs.values():
+                for job_id in job_ids:
+                    self.after_cancel(job_id)
+            self.destruction_jobs.clear()
+
+        # Reset buttons in the Persistent Manipulation subframe to white
         for button in self.persistent_manipulation_buttons.values():
             button.config(bg="white")
 
-        # Stop the ongoing duration timer if it's running
+        # Stop the ongoing duration timer if running
         if hasattr(self, 'duration_job') and self.duration_job:
             self.after_cancel(self.duration_job)
             self.duration_job = None
 
-        print("All persistent manipulation jobs cleared, and duration timer stopped")
+        print("All persistent manipulation jobs cleared, and duration timer stopped.")
+
 
 
 
