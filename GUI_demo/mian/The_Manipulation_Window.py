@@ -29,8 +29,10 @@ class Manipulation(tk.Frame):
 
         self.persistent_manipulation_frame = tk.Frame(self, bg="light gray", borderwidth=2, relief="groove", padx=10, pady=10)
         self.persistent_manipulation_frame.grid(row=2, column=0, rowspan=1, sticky="nsew", padx=10, pady=10)
-        persistent_manipulation_label = tk.Label(self.persistent_manipulation_frame, text="Persistent Manipulation ")
-        persistent_manipulation_label.grid(row=0, column=0, columnspan=4, pady=(0, 10))
+        # Row 0: Persistent Manipulation label and Duration Entry
+        persistent_manipulation_label = tk.Label(self.persistent_manipulation_frame, text="Persistent Manipulation",
+                              font=("Arial", 14, "bold"))
+        persistent_manipulation_label.grid(row=0, column=0, columnspan=3, padx=5, pady=5, sticky="w")
 
         # Discrete Input Frame
         self.dsc_inp_frame = tk.Frame(self, bg="gray", borderwidth=2, relief="groove", padx=10, pady=10)
@@ -117,10 +119,7 @@ class Manipulation(tk.Frame):
         self.analog_input_entries = {}  # Dictionary to store analog input entries by name
         self.analog_input_labels = {}  # Dictionary to store analog input labels by name
 
-        # Row 0: Persistent Manipulation label and Duration Entry
-        main_label = tk.Label(self.persistent_manipulation_frame, text="Persistent Manipulation",
-                              font=("Arial", 14, "bold"))
-        main_label.grid(row=0, column=0, columnspan=3, padx=5, pady=5, sticky="w")
+
 
         # Duration label and entry
         duration_label = tk.Label(self.persistent_manipulation_frame, text="Duration (s):")
@@ -310,20 +309,25 @@ class Manipulation(tk.Frame):
         button = self.persistent_manipulation_buttons[name]
         current_color = button.cget("bg")
 
-        # Cycle through colors: white -> light green -> white
+        # Cycle through colors: white -> light green (write 1) -> light red (write 0) -> white
         if current_color == "white":
             new_color = "light green"
             button.config(bg=new_color)
-            print(f"Persistent Manipulation button '{name}' is set to {new_color}")
-
-            # Start persistent coil writing if light green
-            self.start_persistent_write(name)
+            print(f"Persistent Manipulation button '{name}' is set to {new_color} (write 1)")
+            # Start persistent write with value 1
+            self.start_persistent_write(name, True)
+        elif current_color == "light green":
+            new_color = "light red"
+            button.config(bg=new_color)
+            print(f"Persistent Manipulation button '{name}' is set to {new_color} (write 0)")
+            # Start persistent write with value 0
+            self.start_persistent_write(name, False)
         else:
             new_color = "white"
             button.config(bg=new_color)
-            print(f"Persistent Manipulation button '{name}' is reset to {new_color}")
+            print(f"Persistent Manipulation button '{name}' is reset to {new_color} (OFF)")
 
-    def start_persistent_write(self, name):
+    def start_persistent_write(self, name, write_value):
         # Read and validate the duration from the entry widget
         duration_str = self.duration_entry.get()
         try:
@@ -336,17 +340,20 @@ class Manipulation(tk.Frame):
             duration = 10
             print("Invalid duration entered, defaulting to 10 seconds.")
 
-        interval = 50  # milliseconds
+        interval = 150  # milliseconds
         start_time = time.time()  # Track the start time
 
         def send_write_coil():
-            # Check if the button is still in the light green state
-            if self.persistent_manipulation_buttons[name].cget("bg") == "light green":
+            # Check if the button is still in the appropriate color state
+            button_color = self.persistent_manipulation_buttons[name].cget("bg")
+            expected_color = "light green" if write_value else "light red"
+            if button_color == expected_color:
                 # Send the write_coil command
                 address = self.DATA.coil_addresses[name][0]
                 try:
-                    self.DATA.client.write_coil(address, True)
-                    print(f"Writing ON to coil '{name}' at address {address}")
+                    self.DATA.client.write_coil(address, write_value)
+                    action = "ON" if write_value else "OFF"
+                    print(f"Writing {action} to coil '{name}' at address {address}")
                 except Exception as e:
                     print(f"Error writing to coil '{name}': {e}")
 
@@ -354,14 +361,13 @@ class Manipulation(tk.Frame):
                 if (time.time() - start_time) < duration:
                     self.after(interval, send_write_coil)  # Call again after 250 ms
                 else:
-                    # Turn the coil OFF after the duration ends
+                    # Reset the button color to white and turn the coil OFF after duration
                     try:
                         self.DATA.client.write_coil(address, False)
                         print(f"Turning OFF coil '{name}' after {duration} seconds")
                     except Exception as e:
                         print(f"Error turning off coil '{name}': {e}")
 
-                    # Reset the button color to white
                     self.persistent_manipulation_buttons[name].config(bg="white")
                     print(f"Button '{name}' color reset to white after duration.")
 
