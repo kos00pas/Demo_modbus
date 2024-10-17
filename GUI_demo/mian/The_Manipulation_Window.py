@@ -6,6 +6,7 @@ class Manipulation(tk.Frame):
         super().__init__(parent)
         self.configure(bg="dark blue")
         self.DATA = database
+        self.active_jobs = {}  # Dictionary to track all active jobs by coil name
 
         # Create the subframes (but don’t populate buttons yet)
         self.create_subframes()
@@ -144,7 +145,7 @@ class Manipulation(tk.Frame):
 
         # Clear All button
         clear_all_button = tk.Button(self.persistent_manipulation_frame, text="Clear All",
-                                     command=self.clear_all_persistent_writes)
+                                     command=self.clear_all)
         clear_all_button.grid(row=0, column=7, padx=5, pady=5, sticky="w")
 
         # Row 1: Column headers for coils and analog inputs
@@ -205,10 +206,10 @@ class Manipulation(tk.Frame):
         functions = [
             self.persistent_destruction_all_on,
             self.persistent_destruction_all_off,
-            self.persistent_destruction_button3,
-            self.persistent_destruction_button4,
-            self.persistent_destruction_button5,
-            self.persistent_destruction_button6
+            self.persistent_destruction_all_left,
+            self.persistent_destruction_all_right,
+            self.persistent_destruction_all_forward,
+            self.persistent_destruction_all_opposite
         ]
 
         for i, (name, function) in enumerate(zip(button_names, functions)):
@@ -305,16 +306,16 @@ class Manipulation(tk.Frame):
             # Schedule a final job to reset the button to white after the duration
             self.after(duration * 1000, lambda b=button: b.config(bg="white"))
 
-    def persistent_destruction_button3(self):
-        print("Persistent Destruction: Button 3 action triggered")
+    def persistent_destruction_all_opposite(self):
+        pass
 
-    def persistent_destruction_button4(self):
+    def persistent_destruction_all_forward(self):
         print("Persistent Destruction: Button 4 action triggered")
 
-    def persistent_destruction_button5(self):
+    def persistent_destruction_all_right(self):
         print("Persistent Destruction: Button 5 action triggered")
 
-    def persistent_destruction_button6(self):
+    def persistent_destruction_all_left(self):
         print("Persistent Destruction: Button 6 action triggered")
 
     def toggle_coil_state(self, name):
@@ -571,6 +572,23 @@ class Manipulation(tk.Frame):
         # Reset all buttons in Persistent Manipulation subframe to white
         for button in self.persistent_manipulation_buttons.values():
             button.config(bg="white")
+
+    def clear_all(self):
+        # Cancel all active coil manipulation jobs
+        for job_id in self.active_jobs.values():
+            self.after_cancel(job_id)
+        self.active_jobs.clear()
+
+        # Reset all buttons in the persistent manipulation subframe to white
+        for button in self.persistent_manipulation_buttons.values():
+            button.config(bg="white")
+
+        # Stop the ongoing duration timer if it's running
+        if hasattr(self, 'duration_job') and self.duration_job:
+            self.after_cancel(self.duration_job)
+            self.duration_job = None
+
+        print("All persistent manipulation jobs cleared, and duration timer stopped")
 
 
 
