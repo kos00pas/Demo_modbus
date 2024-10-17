@@ -162,22 +162,22 @@ class Manipulation(tk.Frame):
         analog_label.grid(row=1, column=4, columnspan=3, padx=5, pady=5, sticky="nsew")  # Analog inputs header
 
         # Row 2 onward: Coils and Analog Input Buttons
-        left_row = 2
-        center_row = 2
-        right_row = 2
+        left_row, center_row, right_row, both_row = 2, 2, 2, 2  # Row counters for each column
 
         for name, (address, _) in self.DATA.coil_addresses.items():
-            if "left" in name.lower():
-                column = 0
-                row = left_row
+            # Determine the column based on the name
+            if name.lower().count("left") > 1 or name.lower().count("right") > 1 or (
+                    "left" in name.lower() and "right" in name.lower()):
+                column, row = 3, both_row
+                both_row += 1
+            elif "left" in name.lower():
+                column, row = 0, left_row
                 left_row += 1
             elif "right" in name.lower():
-                column = 2
-                row = right_row
+                column, row = 2, right_row
                 right_row += 1
             else:
-                column = 1
-                row = center_row
+                column, row = 1, center_row
                 center_row += 1
 
             # Create coil button
