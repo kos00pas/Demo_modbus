@@ -365,7 +365,7 @@ class Manipulation(tk.Frame):
                 try:
                     self.DATA.client.write_coil(address, write_value)
                     action = "ON" if write_value else "OFF"
-                    print(f"Writing {action} to coil '{name}' at address {address}")
+                    # print(f"Writing {action} to coil '{name}' at address {address}")
                 except Exception as e:
                     print(f"Error writing to coil '{name}': {e}")
 
